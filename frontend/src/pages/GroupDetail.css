@@ -1,0 +1,170 @@
+.group-detail {
+  padding: 40px 20px;
+}
+
+.group-header {
+  background: white;
+  padding: 32px;
+  border-radius: 16px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.group-header h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.group-subtitle {
+  color: #666;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.group-meta-info {
+  display: flex;
+  gap: 24px;
+  font-size: 14px;
+  color: #999;
+}
+
+.group-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.group-content {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 24px;
+}
+
+.members-section,
+.decisions-section {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.members-section h2,
+.decisions-section h2 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+}
+
+.member-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.member-name {
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-email {
+  font-size: 13px;
+  color: #999;
+}
+
+.member-date {
+  font-size: 12px;
+  color: #999;
+}
+
+.decisions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.decision-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+.decision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.decision-header h3 {
+  font-size: 18px;
+  color: #333;
+  margin: 0;
+}
+
+.decision-card p {
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.decision-stats {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  color: #999;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.empty-decisions {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+@media (max-width: 768px) {
+  .group-header {
+    flex-direction: column;
+  }
+  
+  .group-actions {
+    margin-top: 16px;
+    width: 100%;
+  }
+  
+  .group-content {
+    grid-template-columns: 1fr;
+  }
+}
