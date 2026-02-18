@@ -25,6 +25,10 @@ builder.Services.AddScoped<IDecisionRepository, DecisionRepository>();
 // Services
 builder.Services.AddScoped<IVotingService, VotingService>();
 
+// Email Service
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? "YourSuperSecretKeyForJWTTokenGeneration12345678901234567890";
