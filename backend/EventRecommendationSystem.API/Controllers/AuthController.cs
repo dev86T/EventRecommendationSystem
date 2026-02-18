@@ -69,7 +69,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
-        
+
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
             return Unauthorized(new { message = "Неверный email или пароль" });
@@ -90,6 +90,101 @@ public class AuthController : ControllerBase
                 user.Username
             }
         });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        try
+        {
+            Console.WriteLine($"[FORGOT PASSWORD] Запрос на восстановление: {request.Email}");
+
+            var user = await _userRepository.GetByEmailAsync(request.Email);
+
+            if (user == null)
+            {
+                Console.WriteLine($"[FORGOT PASSWORD] Пользователь не найден: {request.Email}");
+                // Не раскрываем, существует ли пользователь (безопасность)
+                return Ok(new { message = "Если email существует, код восстановления будет отправлен" });
+            }
+
+            // Генерируем временный код (6 цифр)
+            var resetCode = new Random().Next(100000, 999999).ToString();
+            var resetCodeExpiry = DateTime.UtcNow.AddMinutes(15); // Код действует 15 минут
+
+            Console.WriteLine("========================================");
+            Console.WriteLine($"[FORGOT PASSWORD] КОД ВОССТАНОВЛЕНИЯ для {user.Email}:");
+            Console.WriteLine($"[FORGOT PASSWORD] КОД: {resetCode}");
+            Console.WriteLine($"[FORGOT PASSWORD] Действителен до: {resetCodeExpiry.ToLocalTime()}");
+            Console.WriteLine("========================================");
+
+            // Отправляем email
+            Console.WriteLine($"[FORGOT PASSWORD] Отправка email на {user.Email}...");
+            var emailSent = await _emailService.SendPasswordResetEmailAsync(user.Email, resetCode, user.Username);
+
+            if (emailSent)
+            {
+                Console.WriteLine($"[FORGOT PASSWORD] Email успешно отправлен");
+                return Ok(new
+                {
+                    message = "Код восстановления отправлен на ваш email",
+                    success = true
+                });
+            }
+            else
+            {
+                Console.WriteLine($"[FORGOT PASSWORD] Ошибка отправки email");
+                return Ok(new
+                {
+                    message = "Если email существует, код восстановления будет отправлен",
+                    // На случай ошибки email, показываем код в консоли
+                    debug = "Проверьте консоль бэкенда для кода восстановления"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[FORGOT PASSWORD ERROR] {ex.Message}");
+            return StatusCode(500, new { message = "Ошибка сервера" });
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        try
+        {
+            Console.WriteLine($"[RESET PASSWORD] Попытка сброса для: {request.Email}");
+
+            var user = await _userRepository.GetByEmailAsync(request.Email);
+
+            if (user == null)
+            {
+                Console.WriteLine($"[RESET PASSWORD] Пользователь не найден: {request.Email}");
+                return BadRequest(new { message = "Неверный email или код" });
+            }
+
+            // TODO: Проверить код и срок действия из БД
+            // Пока что принимаем любой 6-значный код для разработки
+            if (request.ResetCode.Length != 6 || !int.TryParse(request.ResetCode, out _))
+            {
+                Console.WriteLine($"[RESET PASSWORD] Неверный формат кода");
+                return BadRequest(new { message = "Неверный код восстановления" });
+            }
+
+            Console.WriteLine($"[RESET PASSWORD] Обновление пароля...");
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _userRepository.UpdateAsync(user);
+
+            Console.WriteLine($"[RESET PASSWORD] Пароль успешно обновлен для: {user.Username}");
+
+            return Ok(new { message = "Пароль успешно изменен" });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RESET PASSWORD ERROR] {ex.Message}");
+            return StatusCode(500, new { message = "Ошибка сервера" });
+        }
     }
 
     private string GenerateJwtToken(User user)
@@ -119,105 +214,12 @@ public class AuthController : ControllerBase
     }
 }
 
+// Request models (defined once outside the controller)
 public class RegisterRequest
 {
     public string Email { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
-}
-
-    [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
-    {
-        try
-        {
-            Console.WriteLine($"[FORGOT PASSWORD] Запрос на восстановление: {request.Email}");
-            
-            var user = await _userRepository.GetByEmailAsync(request.Email);
-            
-            if (user == null)
-            {
-                Console.WriteLine($"[FORGOT PASSWORD] Пользователь не найден: {request.Email}");
-                // Не раскрываем, существует ли пользователь (безопасность)
-                return Ok(new { message = "Если email существует, код восстановления будет отправлен" });
-            }
-
-            // Генерируем временный код (6 цифр)
-            var resetCode = new Random().Next(100000, 999999).ToString();
-            var resetCodeExpiry = DateTime.UtcNow.AddMinutes(15); // Код действует 15 минут
-
-            Console.WriteLine("========================================");
-            Console.WriteLine($"[FORGOT PASSWORD] КОД ВОССТАНОВЛЕНИЯ для {user.Email}:");
-            Console.WriteLine($"[FORGOT PASSWORD] КОД: {resetCode}");
-            Console.WriteLine($"[FORGOT PASSWORD] Действителен до: {resetCodeExpiry.ToLocalTime()}");
-            Console.WriteLine("========================================");
-
-            // Отправляем email
-            Console.WriteLine($"[FORGOT PASSWORD] Отправка email на {user.Email}...");
-            var emailSent = await _emailService.SendPasswordResetEmailAsync(user.Email, resetCode, user.Username);
-
-            if (emailSent)
-            {
-                Console.WriteLine($"[FORGOT PASSWORD] Email успешно отправлен");
-                return Ok(new { 
-                    message = "Код восстановления отправлен на ваш email",
-                    success = true
-                });
-            }
-            else
-            {
-                Console.WriteLine($"[FORGOT PASSWORD] Ошибка отправки email");
-                return Ok(new { 
-                    message = "Если email существует, код восстановления будет отправлен",
-                    // На случай ошибки email, показываем код в консоли
-                    debug = "Проверьте консоль бэкенда для кода восстановления"
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[FORGOT PASSWORD ERROR] {ex.Message}");
-            return StatusCode(500, new { message = "Ошибка сервера" });
-        }
-    }
-
-    [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
-    {
-        try
-        {
-            Console.WriteLine($"[RESET PASSWORD] Попытка сброса для: {request.Email}");
-            
-            var user = await _userRepository.GetByEmailAsync(request.Email);
-            
-            if (user == null)
-            {
-                Console.WriteLine($"[RESET PASSWORD] Пользователь не найден: {request.Email}");
-                return BadRequest(new { message = "Неверный email или код" });
-            }
-
-            // TODO: Проверить код и срок действия из БД
-            // Пока что принимаем любой 6-значный код для разработки
-            if (request.ResetCode.Length != 6 || !int.TryParse(request.ResetCode, out _))
-            {
-                Console.WriteLine($"[RESET PASSWORD] Неверный формат кода");
-                return BadRequest(new { message = "Неверный код восстановления" });
-            }
-
-            Console.WriteLine($"[RESET PASSWORD] Обновление пароля...");
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-            await _userRepository.UpdateAsync(user);
-
-            Console.WriteLine($"[RESET PASSWORD] Пароль успешно обновлен для: {user.Username}");
-
-            return Ok(new { message = "Пароль успешно изменен" });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[RESET PASSWORD ERROR] {ex.Message}");
-            return StatusCode(500, new { message = "Ошибка сервера" });
-        }
-    }
 }
 
 public class LoginRequest
