@@ -31,6 +31,29 @@ public class DecisionsController : ControllerBase
         return Guid.Parse(userIdClaim!);
     }
 
+    private async Task CheckAndCompleteExpiredDecisions(Guid decisionId)
+    {
+        try
+        {
+            var decision = await _decisionRepository.GetByIdAsync(decisionId);
+            
+            if (decision != null && 
+                !decision.IsCompleted && 
+                decision.Deadline.HasValue && 
+                decision.Deadline.Value <= DateTime.UtcNow)
+            {
+                Console.WriteLine($"[AUTO COMPLETE] Дедлайн истёк, завершаем решение: {decisionId}");
+                decision.IsCompleted = true;
+                decision.Status = DecisionStatus.Completed;
+                await _decisionRepository.UpdateAsync(decision);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AUTO COMPLETE ERROR] {ex.Message}");
+        }
+    }
+
     [HttpGet("group/{groupId}")]
     public async Task<IActionResult> GetGroupDecisions(Guid groupId)
     {
@@ -61,102 +84,140 @@ public class DecisionsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetDecision(Guid id)
     {
-        var userId = GetUserId();
-        var decision = await _decisionRepository.GetByIdAsync(id);
-
-        if (decision == null)
+        try
         {
-            return NotFound(new { message = "Решение не найдено" });
-        }
+            Console.WriteLine($"[GET DECISION] Запрос решения: {id}");
+            
+            // Проверяем и автоматически завершаем, если дедлайн истёк
+            await CheckAndCompleteExpiredDecisions(id);
+            
+            var userId = GetUserId();
+            var decision = await _decisionRepository.GetByIdAsync(id);
 
-        var isMember = await _groupRepository.IsUserMemberAsync(decision.GroupId, userId);
-        if (!isMember)
-        {
-            return Forbid();
-        }
-
-        var userVote = decision.Votes.FirstOrDefault(v => v.UserId == userId);
-
-        return Ok(new
-        {
-            decision.Id,
-            decision.Title,
-            decision.Description,
-            decision.CreatedAt,
-            decision.Deadline,
-            decision.IsCompleted,
-            decision.Status,
-            Alternatives = decision.Alternatives.Select(a => new
+            if (decision == null)
             {
-                a.Id,
-                a.Name,
-                a.Description,
-                a.ImageUrl,
-                a.MetaData
-            }),
-            Votes = decision.Votes.Select(v => new
+                Console.WriteLine($"[GET DECISION] Решение не найдено: {id}");
+                return NotFound(new { message = "Решение не найдено" });
+            }
+
+            Console.WriteLine($"[GET DECISION] Найдено решение: {decision.Title}");
+            Console.WriteLine($"[GET DECISION] Статус: {decision.Status}");
+            Console.WriteLine($"[GET DECISION] IsCompleted: {decision.IsCompleted}");
+
+            var isMember = await _groupRepository.IsUserMemberAsync(decision.GroupId, userId);
+            if (!isMember)
             {
-                v.Id,
-                v.UserId,
-                v.User.Username,
-                v.CreatedAt,
-                Rankings = v.Rankings.Select(r => new
+                return Forbid();
+            }
+
+            var userVote = decision.Votes.FirstOrDefault(v => v.UserId == userId);
+
+            return Ok(new
+            {
+                decision.Id,
+                decision.GroupId,
+                decision.Title,
+                decision.Description,
+                decision.CreatedAt,
+                decision.Deadline,
+                decision.IsCompleted,
+                decision.Status,
+                Alternatives = decision.Alternatives.Select(a => new
                 {
-                    r.AlternativeId,
-                    r.Rank
-                })
-            }),
-            UserVote = userVote != null ? new
-            {
-                userVote.Id,
-                Rankings = userVote.Rankings.Select(r => new
+                    a.Id,
+                    a.Name,
+                    a.Description,
+                    a.ImageUrl,
+                    a.MetaData
+                }),
+                Votes = decision.Votes.Select(v => new
                 {
-                    r.AlternativeId,
-                    r.Rank
+                    v.Id,
+                    v.UserId,
+                    v.User.Username,
+                    v.CreatedAt,
+                    Rankings = v.Rankings.Select(r => new
+                    {
+                        r.AlternativeId,
+                        r.Rank
+                    })
+                }),
+                UserVote = userVote != null ? new
+                {
+                    userVote.Id,
+                    Rankings = userVote.Rankings.Select(r => new
+                    {
+                        r.AlternativeId,
+                        r.Rank
+                    })
+                } : null,
+                Results = decision.Results.Select(r => new
+                {
+                    r.Id,
+                    r.Method,
+                    r.WinnerAlternativeId,
+                    r.ResultData,
+                    r.CalculatedAt
                 })
-            } : null,
-            Results = decision.Results.Select(r => new
-            {
-                r.Id,
-                r.Method,
-                r.WinnerAlternativeId,
-                r.ResultData,
-                r.CalculatedAt
-            })
-        });
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[GET DECISION ERROR] {ex.Message}");
+            Console.WriteLine($"[GET DECISION ERROR] StackTrace: {ex.StackTrace}");
+            return StatusCode(500, new { message = "Ошибка получения решения" });
+        }
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateDecision([FromBody] CreateDecisionRequest request)
     {
-        var userId = GetUserId();
-        var isMember = await _groupRepository.IsUserMemberAsync(request.GroupId, userId);
-
-        if (!isMember)
+        try
         {
-            return Forbid();
+            Console.WriteLine($"[CREATE DECISION] Создание решения: {request.Title}");
+            
+            var userId = GetUserId();
+            var isMember = await _groupRepository.IsUserMemberAsync(request.GroupId, userId);
+
+            if (!isMember)
+            {
+                Console.WriteLine($"[CREATE DECISION] Пользователь не является членом группы");
+                return Forbid();
+            }
+
+            var decision = new Decision
+            {
+                Id = Guid.NewGuid(),
+                GroupId = request.GroupId,
+                Title = request.Title,
+                Description = request.Description,
+                CreatedAt = DateTime.UtcNow,
+                Deadline = request.Deadline,
+                IsCompleted = false,
+                Status = DecisionStatus.Active  // ЯВНО устанавливаем Active!
+            };
+
+            Console.WriteLine($"[CREATE DECISION] Статус решения: {decision.Status}");
+            Console.WriteLine($"[CREATE DECISION] IsCompleted: {decision.IsCompleted}");
+
+            await _decisionRepository.CreateAsync(decision);
+
+            Console.WriteLine($"[CREATE DECISION] Решение создано успешно: {decision.Id}");
+
+            return CreatedAtAction(nameof(GetDecision), new { id = decision.Id }, new
+            {
+                decision.Id,
+                decision.Title,
+                decision.Description,
+                decision.Status  // Вернем статус для проверки
+            });
         }
-
-        var decision = new Decision
+        catch (Exception ex)
         {
-            Id = Guid.NewGuid(),
-            GroupId = request.GroupId,
-            Title = request.Title,
-            Description = request.Description,
-            CreatedAt = DateTime.UtcNow,
-            Deadline = request.Deadline,
-            IsCompleted = false,
-            Status = DecisionStatus.Active
-        };
-
-        await _decisionRepository.CreateAsync(decision);
-
-        return CreatedAtAction(nameof(GetDecision), new { id = decision.Id }, new
-        {
-            decision.Id,
-            decision.Title,
-            decision.Description
-        });
+            Console.WriteLine($"[CREATE DECISION ERROR] {ex.Message}");
+            Console.WriteLine($"[CREATE DECISION ERROR] StackTrace: {ex.StackTrace}");
+            return StatusCode(500, new { message = "Ошибка создания решения" });
+        }
     }
 
     [HttpPost("{id}/alternatives")]
