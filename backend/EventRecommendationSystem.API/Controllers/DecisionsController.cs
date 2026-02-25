@@ -36,10 +36,10 @@ public class DecisionsController : ControllerBase
         try
         {
             var decision = await _decisionRepository.GetByIdAsync(decisionId);
-            
-            if (decision != null && 
-                !decision.IsCompleted && 
-                decision.Deadline.HasValue && 
+
+            if (decision != null &&
+                !decision.IsCompleted &&
+                decision.Deadline.HasValue &&
                 decision.Deadline.Value <= DateTime.UtcNow)
             {
                 Console.WriteLine($"[AUTO COMPLETE] Дедлайн истёк, завершаем решение: {decisionId}");
@@ -87,10 +87,10 @@ public class DecisionsController : ControllerBase
         try
         {
             Console.WriteLine($"[GET DECISION] Запрос решения: {id}");
-            
+
             // Проверяем и автоматически завершаем, если дедлайн истёк
             await CheckAndCompleteExpiredDecisions(id);
-            
+
             var userId = GetUserId();
             var decision = await _decisionRepository.GetByIdAsync(id);
 
@@ -175,7 +175,7 @@ public class DecisionsController : ControllerBase
         try
         {
             Console.WriteLine($"[CREATE DECISION] Создание решения: {request.Title}");
-            
+
             var userId = GetUserId();
             var isMember = await _groupRepository.IsUserMemberAsync(request.GroupId, userId);
 
@@ -288,10 +288,10 @@ public class DecisionsController : ControllerBase
         {
             // Обновление существующего голоса
             existingVote.UpdatedAt = DateTime.UtcNow;
-            
+
             // Удаление старых рангов
             existingVote.Rankings.Clear();
-            
+
             // Добавление новых рангов
             foreach (var ranking in request.Rankings)
             {
@@ -386,7 +386,7 @@ public class DecisionsController : ControllerBase
 
         var group = await _groupRepository.GetByIdAsync(decision.GroupId);
         var userMembership = group?.Members.FirstOrDefault(m => m.UserId == userId);
-        
+
         if (userMembership == null || (!userMembership.IsAdmin && group.CreatorId != userId))
         {
             return Forbid();
@@ -397,6 +397,45 @@ public class DecisionsController : ControllerBase
         await _decisionRepository.UpdateAsync(decision);
 
         return Ok(new { message = "Решение завершено" });
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteDecision(Guid id)
+    {
+        try
+        {
+            Console.WriteLine($"[DELETE DECISION] Запрос на удаление: {id}");
+
+            var userId = GetUserId();
+            var decision = await _decisionRepository.GetByIdAsync(id);
+
+            if (decision == null)
+            {
+                Console.WriteLine($"[DELETE DECISION] Решение не найдено");
+                return NotFound(new { message = "Решение не найдено" });
+            }
+
+            // Проверяем, что пользователь - создатель группы
+            var group = await _groupRepository.GetByIdAsync(decision.GroupId);
+            if (group == null || group.CreatorId != userId)
+            {
+                Console.WriteLine($"[DELETE DECISION] Доступ запрещён - пользователь не создатель группы");
+                return Forbid();
+            }
+
+            // Удаляем решение (каскадно удалятся альтернативы, голоса, результаты)
+            await _decisionRepository.DeleteAsync(decision);
+
+            Console.WriteLine($"[DELETE DECISION] Решение успешно удалено");
+
+            return Ok(new { message = "Решение удалено" });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DELETE DECISION ERROR] {ex.Message}");
+            Console.WriteLine($"[DELETE DECISION ERROR] StackTrace: {ex.StackTrace}");
+            return StatusCode(500, new { message = "Ошибка удаления решения" });
+        }
     }
 }
 

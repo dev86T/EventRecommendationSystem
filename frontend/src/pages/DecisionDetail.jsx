@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import { decisionsAPI } from '../services/api';
+import { useParams, useNavigate } from 'react-router-dom';
+import { decisionsAPI, groupsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import VotingInterface from '../components/VotingInterface';
 import ResultsDisplay from '../components/ResultsDisplay';
@@ -9,6 +8,7 @@ import './DecisionDetail.css';
 
 const DecisionDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [decision, setDecision] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,7 @@ const DecisionDetail = () => {
   const [timeLeft, setTimeLeft] = useState(null);
   const [isCreator, setIsCreator] = useState(false);
   const [completingVoting, setCompletingVoting] = useState(false);
+  const [deletingDecision, setDeletingDecision] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -30,9 +31,14 @@ const DecisionDetail = () => {
     const fetchGroup = async () => {
       try {
         if (decision?.groupId) {
-          const response = await axios.get(`http://localhost:5000/api/groups/${decision.groupId}`);
+          const response = await groupsAPI.getById(decision.groupId);
           const currentUserId = user?.id;
           setIsCreator(response.data.creatorId === currentUserId);
+          console.log('[CREATOR CHECK]', {
+            currentUserId,
+            creatorId: response.data.creatorId,
+            isCreator: response.data.creatorId === currentUserId
+          });
         }
       } catch (err) {
         console.error('Error fetching group:', err);
@@ -44,6 +50,12 @@ const DecisionDetail = () => {
 
   // Таймер обратного отсчёта
   useEffect(() => {
+    console.log('[TIMER] Decision:', {
+      hasDeadline: !!decision?.deadline,
+      deadline: decision?.deadline,
+      isCompleted: decision?.isCompleted
+    });
+
     if (!decision?.deadline || decision?.isCompleted) {
       setTimeLeft(null);
       return;
@@ -54,10 +66,14 @@ const DecisionDetail = () => {
       const now = new Date();
       const diff = deadline - now;
 
+      console.log('[TIMER] Diff:', diff, 'ms');
+
       if (diff <= 0) {
         setTimeLeft('Время истекло');
-        // Автоматически обновляем страницу через 2 секунды
-        setTimeout(() => window.location.reload(), 2000);
+        setTimeout(() => {
+          console.log('[TIMER] Reloading page due to expired deadline');
+          window.location.reload();
+        }, 2000);
         return;
       }
 
@@ -70,8 +86,10 @@ const DecisionDetail = () => {
         setTimeLeft(`${days}д ${hours}ч ${minutes}м`);
       } else if (hours > 0) {
         setTimeLeft(`${hours}ч ${minutes}м ${seconds}с`);
-      } else {
+      } else if (minutes > 0) {
         setTimeLeft(`${minutes}м ${seconds}с`);
+      } else {
+        setTimeLeft(`${seconds}с`);
       }
     };
 
@@ -83,10 +101,13 @@ const DecisionDetail = () => {
 
   const loadDecision = async () => {
     try {
+      console.log('[LOAD] Loading decision:', id);
       const response = await decisionsAPI.getById(id);
+      console.log('[LOAD] Decision loaded:', response.data);
       setDecision(response.data);
     } catch (error) {
       console.error('Error loading decision:', error);
+      setError('Ошибка загрузки решения');
     } finally {
       setLoading(false);
     }
@@ -96,10 +117,12 @@ const DecisionDetail = () => {
     try {
       await decisionsAPI.submitVote(id, rankings);
       await loadDecision();
-      alert('Голос успешно принят!');
+      setSuccess('Голос успешно принят!');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error submitting vote:', error);
-      alert('Ошибка при отправке голоса');
+      setError('Ошибка при отправке голоса');
+      setTimeout(() => setError(''), 3000);
     }
   };
 
@@ -111,7 +134,8 @@ const DecisionDetail = () => {
       setActiveTab('results');
     } catch (error) {
       console.error('Error calculating results:', error);
-      alert('Ошибка при расчете результатов');
+      setError('Ошибка при расчете результатов');
+      setTimeout(() => setError(''), 3000);
     } finally {
       setCalculatingResults(false);
     }
@@ -125,24 +149,66 @@ const DecisionDetail = () => {
     try {
       setCompletingVoting(true);
       setError('');
-      await axios.put(`http://localhost:5000/api/decisions/${id}/complete`);
+      console.log('[COMPLETE] Completing voting for decision:', id);
+      await decisionsAPI.complete(id);
       setSuccess('Голосование завершено!');
-      // Обновляем страницу для получения свежих данных
       setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
       console.error('Error completing voting:', err);
       setError(err.response?.data?.message || 'Ошибка при завершении голосования');
+      setTimeout(() => setError(''), 3000);
     } finally {
       setCompletingVoting(false);
     }
   };
 
+  const handleDeleteDecision = async () => {
+    const confirmText = 'Вы уверены, что хотите удалить это решение? Все голоса будут потеряны. Это действие НЕОБРАТИМО!';
+    if (!window.confirm(confirmText)) {
+      return;
+    }
+
+    // Двойное подтверждение для безопасности
+    if (!window.confirm('Последнее предупреждение! Удалить решение?')) {
+      return;
+    }
+
+    try {
+      setDeletingDecision(true);
+      setError('');
+      console.log('[DELETE] Deleting decision:', id);
+      
+      // Используем прямой axios для DELETE запроса
+      const api = (await import('../services/api')).default;
+      await api.delete(`/decisions/${id}`);
+      
+      setSuccess('Решение удалено!');
+      setTimeout(() => {
+        navigate(`/groups/${decision.groupId}`);
+      }, 1500);
+    } catch (err) {
+      console.error('Error deleting decision:', err);
+      setError(err.response?.data?.message || 'Ошибка при удалении решения');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setDeletingDecision(false);
+    }
+  };
+
   if (loading) {
-    return <div className="loading">Загрузка...</div>;
+    return (
+      <div className="container">
+        <div className="loading">Загрузка...</div>
+      </div>
+    );
   }
 
   if (!decision) {
-    return <div className="container">Решение не найдено</div>;
+    return (
+      <div className="container">
+        <div className="alert alert-danger">Решение не найдено</div>
+      </div>
+    );
   }
 
   const userVote = decision.userVote;
@@ -150,6 +216,17 @@ const DecisionDetail = () => {
 
   return (
     <div className="container decision-detail">
+      {error && (
+        <div className="alert alert-danger" style={{ marginBottom: '20px' }}>
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="alert alert-success" style={{ marginBottom: '20px' }}>
+          {success}
+        </div>
+      )}
+
       <div className="decision-header-card">
         <div>
           <h1>{decision.title}</h1>
@@ -187,35 +264,53 @@ const DecisionDetail = () => {
               {decision.status === 'Active' ? '✅ Активно' : 
                decision.status === 'Completed' ? '🏁 Завершено' : '❌ Отменено'}
             </span>
-            <span>📋 {decision.alternatives.length} вариантов</span>
-            <span>🗳️ {decision.votes.length} голосов</span>
+            <span>📋 {decision.alternatives?.length || 0} вариантов</span>
+            <span>🗳️ {decision.votes?.length || 0} голосов</span>
             <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
           </div>
 
-          {/* Кнопка завершения для создателя */}
-          {!decision.isCompleted && isCreator && (
-            <div style={{ marginTop: '15px' }}>
-              {error && <div className="alert alert-danger">{error}</div>}
-              {success && <div className="alert alert-success">{success}</div>}
+          {/* Кнопки для создателя */}
+          {isCreator && (
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {!decision.isCompleted && (
+                <button 
+                  className="btn btn-danger" 
+                  onClick={handleCompleteVoting}
+                  disabled={completingVoting}
+                  style={{
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {completingVoting ? 'Завершение...' : '🏁 Завершить голосование'}
+                </button>
+              )}
+              
               <button 
-                className="btn btn-danger" 
-                onClick={handleCompleteVoting}
-                disabled={completingVoting}
+                className="btn"
+                onClick={handleDeleteDecision}
+                disabled={deletingDecision}
                 style={{
                   padding: '12px 24px',
                   fontSize: '16px',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  background: '#dc3545',
+                  color: 'white',
+                  border: 'none'
                 }}
               >
-                {completingVoting ? 'Завершение...' : '🏁 Завершить голосование досрочно'}
+                {deletingDecision ? 'Удаление...' : '🗑️ Удалить решение'}
               </button>
+              
               <p style={{ 
                 fontSize: '13px', 
                 color: '#666', 
                 marginTop: '8px',
-                fontStyle: 'italic'
+                fontStyle: 'italic',
+                flexBasis: '100%'
               }}>
-                Только вы как создатель группы можете завершить голосование досрочно
+                Только вы как создатель группы можете завершить или удалить голосование
               </p>
             </div>
           )}
@@ -328,11 +423,11 @@ const DecisionDetail = () => {
               <button 
                 className="btn btn-primary"
                 onClick={() => calculateResults('all')}
-                disabled={calculatingResults || decision.votes.length === 0}
+                disabled={calculatingResults || (decision.votes?.length || 0) === 0}
               >
                 {calculatingResults ? 'Расчет...' : 'Рассчитать результаты'}
               </button>
-              {decision.votes.length === 0 && (
+              {(decision.votes?.length || 0) === 0 && (
                 <p className="help-text">Необходимо минимум 1 голос для расчета результатов</p>
               )}
             </div>
@@ -346,7 +441,7 @@ const DecisionDetail = () => {
             <div className="info-card">
               <h3>Варианты для выбора</h3>
               <div className="alternatives-list">
-                {decision.alternatives.map((alt, index) => (
+                {decision.alternatives?.map((alt, index) => (
                   <div key={alt.id} className="alternative-info-item">
                     <div className="alternative-number">{index + 1}</div>
                     <div>
@@ -359,9 +454,9 @@ const DecisionDetail = () => {
             </div>
 
             <div className="info-card">
-              <h3>Голоса участников ({decision.votes.length})</h3>
+              <h3>Голоса участников ({decision.votes?.length || 0})</h3>
               <div className="votes-list">
-                {decision.votes.map(vote => (
+                {decision.votes?.map(vote => (
                   <div key={vote.id} className="vote-item">
                     <div className="vote-user">
                       <strong>{vote.username}</strong>
@@ -369,10 +464,10 @@ const DecisionDetail = () => {
                     </div>
                     <div className="vote-rankings">
                       {vote.rankings
-                        .sort((a, b) => a.rank - b.rank)
+                        ?.sort((a, b) => a.rank - b.rank)
                         .map((ranking, idx) => (
                           <span key={ranking.alternativeId} className="ranking-badge">
-                            {idx + 1}. {decision.alternatives.find(a => a.id === ranking.alternativeId)?.name}
+                            {idx + 1}. {decision.alternatives?.find(a => a.id === ranking.alternativeId)?.name}
                           </span>
                         ))}
                     </div>

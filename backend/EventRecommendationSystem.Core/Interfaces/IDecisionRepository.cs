@@ -15,4 +15,6 @@ public interface IDecisionRepository
     Task<IEnumerable<Vote>> GetDecisionVotesAsync(Guid decisionId);
     Task<DecisionResult> SaveResultAsync(DecisionResult result);
     Task<IEnumerable<DecisionResult>> GetDecisionResultsAsync(Guid decisionId);
+    Task<IEnumerable<Decision>> DeleteAsync(Decision decision);
+
 }
