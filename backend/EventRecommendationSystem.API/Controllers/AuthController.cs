@@ -23,118 +23,114 @@ public class AuthController : ControllerBase
         _emailService = emailService;
     }
 
+    // ========================= REGISTER =========================
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        // Проверка существования пользователя
-        var existingUser = await _userRepository.GetByEmailAsync(request.Email);
-        if (existingUser != null)
+        try
         {
-            return BadRequest(new { message = "Пользователь с таким email уже существует" });
-        }
+            Console.WriteLine($"[REGISTER] Попытка регистрации: {request.Email}");
 
-        var existingUsername = await _userRepository.GetByUsernameAsync(request.Username);
-        if (existingUsername != null)
-        {
-            return BadRequest(new { message = "Пользователь с таким именем уже существует" });
-        }
-
-        // Создание пользователя
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Email = request.Email,
-            Username = request.Username,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _userRepository.CreateAsync(user);
-
-        var token = GenerateJwtToken(user);
-
-        return Ok(new
-        {
-            token,
-            user = new
+            // Проверка существования пользователя
+            var existingUser = await _userRepository.GetByEmailAsync(request.Email);
+            if (existingUser != null)
             {
-                user.Id,
-                user.Email,
-                user.Username
+                Console.WriteLine($"[REGISTER] Email уже используется: {request.Email}");
+                return BadRequest(new { message = "Пользователь с таким email уже существует" });
             }
-        });
+
+            var existingUsername = await _userRepository.GetByUsernameAsync(request.Username);
+            if (existingUsername != null)
+            {
+                Console.WriteLine($"[REGISTER] Username уже используется: {request.Username}");
+                return BadRequest(new { message = "Пользователь с таким именем уже существует" });
+            }
+
+            // Создание пользователя
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = request.Email,
+                Username = request.Username,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _userRepository.CreateAsync(user);
+
+            Console.WriteLine($"[REGISTER] Пользователь создан: {user.Username}");
+
+            var token = GenerateJwtToken(user);
+
+            return Ok(new
+            {
+                token,
+                user = new
+                {
+                    user.Id,
+                    user.Email,
+                    user.Username
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[REGISTER ERROR] {ex.Message}");
+            return StatusCode(500, new { message = "Ошибка регистрации" });
+        }
     }
 
+    // ========================= LOGIN =========================
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var user = await _userRepository.GetByEmailAsync(request.Email);
-        
-        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        try
         {
-            return Unauthorized(new { message = "Неверный email или пароль" });
-        }
+            Console.WriteLine($"[LOGIN] Попытка входа: {request.Email}");
 
-        user.LastLoginAt = DateTime.UtcNow;
-        await _userRepository.UpdateAsync(user);
+            var user = await _userRepository.GetByEmailAsync(request.Email);
 
-        var token = GenerateJwtToken(user);
-
-        return Ok(new
-        {
-            token,
-            user = new
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
-                user.Id,
-                user.Email,
-                user.Username
+                Console.WriteLine($"[LOGIN] Неверные учетные данные для: {request.Email}");
+                return Unauthorized(new { message = "Неверный email или пароль" });
             }
-        });
-    }
 
-    private string GenerateJwtToken(User user)
-    {
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? "YourSuperSecretKeyForJWTTokenGeneration12345678901234567890";
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            user.LastLoginAt = DateTime.UtcNow;
+            await _userRepository.UpdateAsync(user);
 
-        var claims = new[]
+            Console.WriteLine($"[LOGIN] Успешный вход: {user.Username}");
+
+            var token = GenerateJwtToken(user);
+
+            return Ok(new
+            {
+                token,
+                user = new
+                {
+                    user.Id,
+                    user.Email,
+                    user.Username
+                }
+            });
+        }
+        catch (Exception ex)
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim("username", user.Username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-
-        var token = new JwtSecurityToken(
-            issuer: jwtSettings["Issuer"],
-            audience: jwtSettings["Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpirationMinutes"] ?? "1440")),
-            signingCredentials: credentials
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
+            Console.WriteLine($"[LOGIN ERROR] {ex.Message}");
+            return StatusCode(500, new { message = "Ошибка входа" });
+        }
     }
-}
 
-public class RegisterRequest
-{
-    public string Email { get; set; } = string.Empty;
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-}
-
+    // ========================= FORGOT PASSWORD =========================
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         try
         {
             Console.WriteLine($"[FORGOT PASSWORD] Запрос на восстановление: {request.Email}");
-            
+
             var user = await _userRepository.GetByEmailAsync(request.Email);
-            
+
             if (user == null)
             {
                 Console.WriteLine($"[FORGOT PASSWORD] Пользователь не найден: {request.Email}");
@@ -159,7 +155,8 @@ public class RegisterRequest
             if (emailSent)
             {
                 Console.WriteLine($"[FORGOT PASSWORD] Email успешно отправлен");
-                return Ok(new { 
+                return Ok(new
+                {
                     message = "Код восстановления отправлен на ваш email",
                     success = true
                 });
@@ -167,7 +164,8 @@ public class RegisterRequest
             else
             {
                 Console.WriteLine($"[FORGOT PASSWORD] Ошибка отправки email");
-                return Ok(new { 
+                return Ok(new
+                {
                     message = "Если email существует, код восстановления будет отправлен",
                     // На случай ошибки email, показываем код в консоли
                     debug = "Проверьте консоль бэкенда для кода восстановления"
@@ -181,15 +179,16 @@ public class RegisterRequest
         }
     }
 
+    // ========================= RESET PASSWORD =========================
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         try
         {
             Console.WriteLine($"[RESET PASSWORD] Попытка сброса для: {request.Email}");
-            
+
             var user = await _userRepository.GetByEmailAsync(request.Email);
-            
+
             if (user == null)
             {
                 Console.WriteLine($"[RESET PASSWORD] Пользователь не найден: {request.Email}");
@@ -217,6 +216,33 @@ public class RegisterRequest
             Console.WriteLine($"[RESET PASSWORD ERROR] {ex.Message}");
             return StatusCode(500, new { message = "Ошибка сервера" });
         }
+    }
+
+    // ========================= JWT TOKEN GENERATION =========================
+    private string GenerateJwtToken(User user)
+    {
+        var jwtSettings = _configuration.GetSection("JwtSettings");
+        var secretKey = jwtSettings["SecretKey"] ?? "YourSuperSecretKeyForJWTTokenGeneration12345678901234567890";
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim("username", user.Username),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpirationMinutes"] ?? "1440")),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
 
