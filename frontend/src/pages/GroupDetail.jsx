@@ -243,11 +243,12 @@ const GroupDetail = () => {
                         disabled={deletingDecision === decision.id}
                         style={{
                           position: 'absolute',
-                          top: '15px',
-                          right: '15px',
-                          padding: '6px 12px',
-                          fontSize: '14px',
-                          zIndex: 10
+                          top: '10px',
+                          right: '150px',  // Сдвинули влево от бейджа статуса
+                          padding: '8px 12px',
+                          fontSize: '16px',
+                          zIndex: 10,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                         }}
                         title="Удалить решение"
                       >

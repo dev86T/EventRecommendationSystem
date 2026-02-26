@@ -405,7 +405,18 @@ public class DecisionsController : ControllerBase
             var member = group.Members.FirstOrDefault(m => m.UserId == userId);
             var isAdmin = member?.IsAdmin ?? false;
 
-            Console.WriteLine($"[COMPLETE DECISION] Права: isCreator={isCreator}, isAdmin={isAdmin}");
+            Console.WriteLine($"[COMPLETE DECISION] Детальная проверка прав:");
+            Console.WriteLine($"  - UserId: {userId}");
+            Console.WriteLine($"  - CreatorId: {group.CreatorId}");
+            Console.WriteLine($"  - isCreator: {isCreator}");
+            Console.WriteLine($"  - Members count: {group.Members.Count}");
+            Console.WriteLine($"  - Member found: {member != null}");
+            if (member != null)
+            {
+                Console.WriteLine($"  - Member.UserId: {member.UserId}");
+                Console.WriteLine($"  - Member.IsAdmin: {member.IsAdmin}");
+            }
+            Console.WriteLine($"  - isAdmin: {isAdmin}");
 
             if (!isCreator && !isAdmin)
             {
@@ -463,7 +474,18 @@ public class DecisionsController : ControllerBase
             var member = group.Members.FirstOrDefault(m => m.UserId == userId);
             var isAdmin = member?.IsAdmin ?? false;
 
-            Console.WriteLine($"[DELETE DECISION] Права: isCreator={isCreator}, isAdmin={isAdmin}");
+            Console.WriteLine($"[DELETE DECISION] Детальная проверка прав:");
+            Console.WriteLine($"  - UserId: {userId}");
+            Console.WriteLine($"  - CreatorId: {group.CreatorId}");
+            Console.WriteLine($"  - isCreator: {isCreator}");
+            Console.WriteLine($"  - Members count: {group.Members.Count}");
+            Console.WriteLine($"  - Member found: {member != null}");
+            if (member != null)
+            {
+                Console.WriteLine($"  - Member.UserId: {member.UserId}");
+                Console.WriteLine($"  - Member.IsAdmin: {member.IsAdmin}");
+            }
+            Console.WriteLine($"  - isAdmin: {isAdmin}");
 
             if (!isCreator && !isAdmin)
             {
