@@ -98,7 +98,13 @@ const GroupDetail = () => {
     user => !group.members.some(member => member.userId === user.id)
   );
 
-  const isCreator = group.creatorId === user?.id;
+  const isCreator = group.creatorId === user?.id || String(group.creatorId) === String(user?.id);
+
+  console.log('[GROUP DETAIL] isCreator check:', {
+    creatorId: group.creatorId,
+    userId: user?.id,
+    isCreator
+  });
 
   return (
     <div className="container group-detail">
@@ -172,7 +178,6 @@ const GroupDetail = () => {
                 </div>
                 <div className="member-info">
                   <div className="member-name">{member.user.username}</div>
-                  <div className="member-email">{member.user.email}</div>
                 </div>
                 {member.isAdmin && <span className="badge badge-primary">Админ</span>}
               </div>

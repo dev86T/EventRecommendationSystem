@@ -8,7 +8,8 @@ const CreateDecision = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [durationMinutes, setDurationMinutes] = useState(60);
+  const [minutes, setMinutes] = useState(5);
+  const [seconds, setSeconds] = useState(0);
   const [alternatives, setAlternatives] = useState([
     { name: '', description: '' },
     { name: '', description: '' }
@@ -35,7 +36,15 @@ const CreateDecision = () => {
     
     try {
       const deadline = new Date();
-      deadline.setMinutes(deadline.getMinutes() + parseInt(durationMinutes));
+      const totalSeconds = (parseInt(minutes) * 60) + parseInt(seconds);
+      deadline.setSeconds(deadline.getSeconds() + totalSeconds);
+
+      console.log('[CREATE DECISION] Deadline:', {
+        minutes,
+        seconds,
+        totalSeconds,
+        deadline: deadline.toISOString()
+      });
 
       const decisionRes = await decisionsAPI.create({
         groupId,
@@ -90,86 +99,161 @@ const CreateDecision = () => {
 
           <div className="form-group">
             <label>⏱️ Длительность голосования *</label>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <select
-                className="form-control"
-                value={durationMinutes}
-                onChange={(e) => setDurationMinutes(e.target.value)}
-                required
-                style={{ maxWidth: '200px' }}
-              >
-                <option value="5">5 минут (тест)</option>
-                <option value="15">15 минут</option>
-                <option value="30">30 минут</option>
-                <option value="60">1 час</option>
-                <option value="120">2 часа</option>
-                <option value="180">3 часа</option>
-                <option value="360">6 часов</option>
-                <option value="720">12 часов</option>
-                <option value="1440">1 день</option>
-                <option value="2880">2 дня</option>
-                <option value="4320">3 дня</option>
-                <option value="10080">1 неделя</option>
-              </select>
+            
+            {/* Кастомный ввод времени */}
+            <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={minutes}
+                  onChange={(e) => setMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+                  min="0"
+                  max="10080"
+                  required
+                  style={{ width: '100px' }}
+                  placeholder="0"
+                />
+                <span style={{ fontWeight: 'bold' }}>минут</span>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={seconds}
+                  onChange={(e) => setSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                  min="0"
+                  max="59"
+                  style={{ width: '100px' }}
+                  placeholder="0"
+                />
+                <span style={{ fontWeight: 'bold' }}>секунд</span>
+              </div>
             </div>
-            <p className="help-text" style={{ marginTop: '8px' }}>
-              Голосование автоматически завершится через указанное время
+
+            {/* Быстрые кнопки */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-secondary"
+                onClick={() => { setMinutes(1); setSeconds(0); }}
+                style={{ padding: '6px 12px', fontSize: '13px' }}
+              >
+                1 мин
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-secondary"
+                onClick={() => { setMinutes(3); setSeconds(0); }}
+                style={{ padding: '6px 12px', fontSize: '13px' }}
+              >
+                3 мин
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-secondary"
+                onClick={() => { setMinutes(5); setSeconds(0); }}
+                style={{ padding: '6px 12px', fontSize: '13px' }}
+              >
+                5 мин
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-secondary"
+                onClick={() => { setMinutes(10); setSeconds(0); }}
+                style={{ padding: '6px 12px', fontSize: '13px' }}
+              >
+                10 мин
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-secondary"
+                onClick={() => { setMinutes(60); setSeconds(0); }}
+                style={{ padding: '6px 12px', fontSize: '13px' }}
+              >
+                1 час
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-secondary"
+                onClick={() => { setMinutes(1440); setSeconds(0); }}
+                style={{ padding: '6px 12px', fontSize: '13px' }}
+              >
+                1 день
+              </button>
+            </div>
+
+            <p className="help-text" style={{ marginTop: '10px', color: '#666' }}>
+              💡 Введите любое время, например: <strong>3 минуты 17 секунд</strong>
             </p>
           </div>
 
           <div className="alternatives-section">
             <h3>Варианты для выбора</h3>
-            <p className="help-text">
-              Добавьте минимум 2 варианта. Участники будут ранжировать их по предпочтениям.
-            </p>
-
+            <p className="section-description">Добавьте минимум 2 варианта</p>
+            
             {alternatives.map((alt, index) => (
-              <div key={index} className="alternative-item">
+              <div key={index} className="alternative-card">
                 <div className="alternative-header">
                   <h4>Вариант {index + 1}</h4>
                   {alternatives.length > 2 && (
                     <button
                       type="button"
-                      className="btn-remove"
+                      className="btn-icon"
                       onClick={() => removeAlternative(index)}
+                      title="Удалить вариант"
                     >
-                      ✕
+                      ❌
                     </button>
                   )}
                 </div>
+                
                 <div className="form-group">
+                  <label>Название *</label>
                   <input
                     type="text"
                     className="form-control"
                     value={alt.name}
                     onChange={(e) => updateAlternative(index, 'name', e.target.value)}
                     required
-                    placeholder="Название варианта"
+                    placeholder={`Например: Ресторан "Пушкин"`}
                   />
                 </div>
+                
                 <div className="form-group">
+                  <label>Описание (опционально)</label>
                   <textarea
                     className="form-control"
                     value={alt.description}
                     onChange={(e) => updateAlternative(index, 'description', e.target.value)}
-                    placeholder="Описание варианта (опционально)"
+                    placeholder="Дополнительные детали"
                     rows="2"
                   />
                 </div>
               </div>
             ))}
-
-            <button type="button" className="btn btn-secondary" onClick={addAlternative}>
+            
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={addAlternative}
+              style={{ width: '100%', marginTop: '10px' }}
+            >
               + Добавить вариант
             </button>
           </div>
 
           <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
-              Отмена
-            </button>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary btn-lg">
               Создать решение
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-secondary"
+              onClick={() => navigate(`/groups/${groupId}`)}
+            >
+              Отмена
             </button>
           </div>
         </form>
