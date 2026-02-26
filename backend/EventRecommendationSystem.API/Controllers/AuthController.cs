@@ -89,7 +89,7 @@ public class AuthController : ControllerBase
             Console.WriteLine($"[LOGIN] Попытка входа: {request.Email}");
 
             var user = await _userRepository.GetByEmailAsync(request.Email);
-
+            
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 Console.WriteLine($"[LOGIN] Неверные учетные данные для: {request.Email}");
@@ -128,9 +128,9 @@ public class AuthController : ControllerBase
         try
         {
             Console.WriteLine($"[FORGOT PASSWORD] Запрос на восстановление: {request.Email}");
-
+            
             var user = await _userRepository.GetByEmailAsync(request.Email);
-
+            
             if (user == null)
             {
                 Console.WriteLine($"[FORGOT PASSWORD] Пользователь не найден: {request.Email}");
@@ -155,8 +155,7 @@ public class AuthController : ControllerBase
             if (emailSent)
             {
                 Console.WriteLine($"[FORGOT PASSWORD] Email успешно отправлен");
-                return Ok(new
-                {
+                return Ok(new { 
                     message = "Код восстановления отправлен на ваш email",
                     success = true
                 });
@@ -164,8 +163,7 @@ public class AuthController : ControllerBase
             else
             {
                 Console.WriteLine($"[FORGOT PASSWORD] Ошибка отправки email");
-                return Ok(new
-                {
+                return Ok(new { 
                     message = "Если email существует, код восстановления будет отправлен",
                     // На случай ошибки email, показываем код в консоли
                     debug = "Проверьте консоль бэкенда для кода восстановления"
@@ -186,9 +184,9 @@ public class AuthController : ControllerBase
         try
         {
             Console.WriteLine($"[RESET PASSWORD] Попытка сброса для: {request.Email}");
-
+            
             var user = await _userRepository.GetByEmailAsync(request.Email);
-
+            
             if (user == null)
             {
                 Console.WriteLine($"[RESET PASSWORD] Пользователь не найден: {request.Email}");
@@ -245,6 +243,9 @@ public class AuthController : ControllerBase
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
+
+// ========================= REQUEST MODELS =========================
+// Все классы запросов ВНЕ класса контроллера
 
 public class RegisterRequest
 {

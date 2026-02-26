@@ -75,7 +75,7 @@ public class DecisionsController : ControllerBase
             d.CreatedAt,
             d.Deadline,
             d.IsCompleted,
-            d.Status,
+            Status = d.Status.ToString(), // ВАЖНО: возвращаем строку!
             AlternativesCount = d.Alternatives.Count,
             VotesCount = d.Votes.Count
         }));

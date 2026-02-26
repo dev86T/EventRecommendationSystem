@@ -5,6 +5,19 @@ import { groupsAPI, decisionsAPI, usersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import './GroupDetail.css';
 
+const getAnimalAvatar = (email) => {
+  const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', 
+                   '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
+                   '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌'];
+  
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) {
+    hash = ((hash << 5) - hash) + email.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return animals[Math.abs(hash) % animals.length];
+};
+
 const GroupDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -53,10 +66,10 @@ const GroupDetail = () => {
   };
 
   const handleDeleteDecision = async (decisionId, decisionTitle, e) => {
-    e.preventDefault(); // Предотвращаем переход по ссылке
-    e.stopPropagation(); // Останавливаем всплытие события
+    e.preventDefault();
+    e.stopPropagation();
 
-    if (!window.confirm(`Вы уверены, что хотите удалить решение "${decisionTitle}"? Это действие необратимо!`)) {
+    if (!window.confirm(`Вы уверены, что хотите удалить решение "${decisionTitle}"?`)) {
       return;
     }
 
@@ -64,7 +77,7 @@ const GroupDetail = () => {
       setDeletingDecision(decisionId);
       await axios.delete(`http://localhost:5000/api/decisions/${decisionId}`);
       alert('Решение успешно удалено');
-      loadData(); // Обновляем список решений
+      loadData();
     } catch (error) {
       console.error('Error deleting decision:', error);
       alert(error.response?.data?.message || 'Ошибка удаления решения');
@@ -154,7 +167,9 @@ const GroupDetail = () => {
           <div className="members-list">
             {group.members.map(member => (
               <div key={member.userId} className="member-item">
-                <div className="member-avatar">{member.user.username[0].toUpperCase()}</div>
+                <div className="member-avatar" style={{ fontSize: '32px' }}>
+                  {getAnimalAvatar(member.user.email)}
+                </div>
                 <div className="member-info">
                   <div className="member-name">{member.user.username}</div>
                   <div className="member-email">{member.user.email}</div>
@@ -176,51 +191,56 @@ const GroupDetail = () => {
             </div>
           ) : (
             <div className="decisions-list">
-              {decisions.map(decision => (
-                <div key={decision.id} className="card decision-card" style={{ position: 'relative' }}>
-                  <Link 
-                    to={`/decisions/${decision.id}`}
-                    style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-                  >
-                    <div className="decision-header">
-                      <h3>{decision.title}</h3>
-                      <span className={`badge ${
-                        decision.status === 'Active' ? 'badge-success' : 
-                        decision.status === 'Completed' ? 'badge-primary' : 'badge-danger'
-                      }`}>
-                        {decision.status === 'Active' ? 'Активно' : 
-                         decision.status === 'Completed' ? 'Завершено' : 'Отменено'}
-                      </span>
-                    </div>
-                    <p>{decision.description}</p>
-                    <div className="decision-stats">
-                      <span>📋 {decision.alternativesCount} вариантов</span>
-                      <span>🗳️ {decision.votesCount} голосов</span>
-                      <span>{new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
-                    </div>
-                  </Link>
-                  
-                  {/* Кнопка удаления только для создателя группы */}
-                  {isCreator && (
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={(e) => handleDeleteDecision(decision.id, decision.title, e)}
-                      disabled={deletingDecision === decision.id}
-                      style={{
-                        position: 'absolute',
-                        top: '15px',
-                        right: '15px',
-                        padding: '6px 12px',
-                        fontSize: '14px',
-                        zIndex: 10
-                      }}
-                      title="Удалить решение"
+              {decisions.map(decision => {
+                const realStatus = typeof decision.status === 'string' ? decision.status : 
+                  decision.status === 0 ? 'Active' :
+                  decision.status === 1 ? 'Completed' : 'Cancelled';
+
+                return (
+                  <div key={decision.id} className="card decision-card" style={{ position: 'relative' }}>
+                    <Link 
+                      to={`/decisions/${decision.id}`}
+                      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
                     >
-                      {deletingDecision === decision.id ? '⏳' : '🗑️ Удалить'}
-                    </button>
-                  )}
-                </div>
-              ))}
+                      <div className="decision-header">
+                        <h3>{decision.title}</h3>
+                        <span className={`badge ${
+                          realStatus === 'Active' ? 'badge-success' : 
+                          realStatus === 'Completed' ? 'badge-primary' : 'badge-danger'
+                        }`}>
+                          {realStatus === 'Active' ? '✅ Активно' : 
+                           realStatus === 'Completed' ? '🏁 Завершено' : '❌ Отменено'}
+                        </span>
+                      </div>
+                      <p>{decision.description}</p>
+                      <div className="decision-stats">
+                        <span>📋 {decision.alternativesCount} вариантов</span>
+                        <span>🗳️ {decision.votesCount} голосов</span>
+                        <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
+                      </div>
+                    </Link>
+                    
+                    {isCreator && (
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={(e) => handleDeleteDecision(decision.id, decision.title, e)}
+                        disabled={deletingDecision === decision.id}
+                        style={{
+                          position: 'absolute',
+                          top: '15px',
+                          right: '15px',
+                          padding: '6px 12px',
+                          fontSize: '14px',
+                          zIndex: 10
+                        }}
+                        title="Удалить решение"
+                      >
+                        {deletingDecision === decision.id ? '⏳' : '🗑️'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
