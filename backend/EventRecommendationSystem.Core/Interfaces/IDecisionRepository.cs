@@ -7,6 +7,7 @@ public interface IDecisionRepository
     Task<Decision?> GetByIdAsync(Guid id);
     Task<Decision> CreateAsync(Decision decision);
     Task UpdateAsync(Decision decision);
+    Task DeleteAsync(Decision decision);
     Task<IEnumerable<Decision>> GetGroupDecisionsAsync(Guid groupId);
     Task<Alternative> AddAlternativeAsync(Alternative alternative);
     Task<Vote> AddVoteAsync(Vote vote);
@@ -15,6 +16,4 @@ public interface IDecisionRepository
     Task<IEnumerable<Vote>> GetDecisionVotesAsync(Guid decisionId);
     Task<DecisionResult> SaveResultAsync(DecisionResult result);
     Task<IEnumerable<DecisionResult>> GetDecisionResultsAsync(Guid decisionId);
-    Task<IEnumerable<Decision>> DeleteAsync(Decision decision);
-
 }

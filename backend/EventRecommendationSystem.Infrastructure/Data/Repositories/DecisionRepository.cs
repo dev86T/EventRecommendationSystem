@@ -40,6 +40,12 @@ public class DecisionRepository : IDecisionRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task DeleteAsync(Decision decision)
+    {
+        _context.Decisions.Remove(decision);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<IEnumerable<Decision>> GetGroupDecisionsAsync(Guid groupId)
     {
         return await _context.Decisions
