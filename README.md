@@ -1,326 +1,125 @@
-# Система рекомендаций мероприятий
+# 🎯 Event Recommendation System
 
-Дипломный проект: Разработка системы поддержки принятия групповых решений на основе анализа пользовательских предпочтений с применением методов Condorcet и Kemeny-Young.
+**Система Рекомендаций Мероприятий** — платформа для коллективного принятия решений с использованием продвинутых алгоритмов голосования.
 
-## 🎯 О проекте
+![Version](https://img.shields.io/badge/version-1.0.0-blue) ![.NET](https://img.shields.io/badge/.NET-8.0-purple) ![React](https://img.shields.io/badge/React-18-blue) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 
-Веб-приложение для коллективного принятия решений с использованием различных методов голосования:
+---
 
-- **Метод Кондорсе (Condorcet)** - определяет победителя через попарные сравнения
-- **Метод Кемени-Янга (Kemeny-Young)** - находит оптимальное ранжирование
-- **Метод Борда (Borda)** - балльная система
-- **Простое большинство (Plurality)** - учет только первых мест
+## 🌟 Возможности
 
-## 🛠 Технологический стек
+- ✅ **4 алгоритма голосования:** Condorcet, Kemeny-Young, Borda, Plurality
+- ⏱️ **Таймер обратного отсчёта** до дедлайна
+- 🏁 **Автоматическое завершение** голосования
+- 🗑️ **Удаление решений** (только создатель)
+- 📧 **Email уведомления** через Gmail
+- 🔐 **JWT аутентификация**
+- 🎨 **Drag-and-drop** ранжирование
 
-### Backend
-- **.NET 8** - веб API
-- **ASP.NET Core** - REST API с JWT аутентификацией
-- **Entity Framework Core** - ORM для работы с БД
-- **PostgreSQL** - реляционная база данных
-- **BCrypt** - хеширование паролей
+---
 
-### Frontend
-- **React 18** - UI библиотека
-- **Vite** - сборщик проекта
-- **React Router** - маршрутизация
-- **Axios** - HTTP клиент
-- **Drag and Drop** - интерактивное голосование
+## 🚀 Быстрый старт
 
-## 📋 Предварительные требования
+### Требования
 
-Установите следующие программы:
+- .NET 8 SDK
+- Node.js 18+
+- Docker
 
-1. **.NET 8 SDK** - https://dotnet.microsoft.com/download/dotnet/8.0
-2. **Node.js 18+** - https://nodejs.org/
-3. **Docker Desktop** (для PostgreSQL) - https://www.docker.com/products/docker-desktop
-   
-   ИЛИ
-   
-   **PostgreSQL 15+** - https://www.postgresql.org/download/
-
-## 🚀 Инструкция по запуску
-
-### Шаг 1: Клонирование и подготовка
+### Установка
 
 ```bash
-# Перейдите в директорию проекта
-cd event-recommendation-system
-```
+# 1. Распаковать архив
+tar -xzf event-recommendation-system.tar.gz
+cd event-recommendation-system/
 
-### Шаг 2: Запуск базы данных PostgreSQL
-
-#### Вариант A: С использованием Docker (рекомендуется)
-
-```bash
-# Запустите PostgreSQL в Docker
+# 2. Запустить PostgreSQL
 docker-compose up -d
 
-# Проверьте, что контейнер запущен
-docker ps
-```
+# 3. Backend
+cd backend/EventRecommendationSystem.API
+dotnet ef database update
+dotnet run
+# → http://localhost:5000
 
-#### Вариант B: Локальная установка PostgreSQL
-
-1. Установите PostgreSQL
-2. Создайте базу данных:
-```sql
-CREATE DATABASE eventrecommendation;
-CREATE USER postgres WITH PASSWORD 'postgres';
-GRANT ALL PRIVILEGES ON DATABASE eventrecommendation TO postgres;
-```
-
-3. Если используете другие учетные данные, измените строку подключения в файле:
-   `backend/EventRecommendationSystem.API/appsettings.json`
-
-### Шаг 3: Запуск Backend
-
-```bash
-# Перейдите в директорию backend
-cd backend
-
-# Восстановите NuGet пакеты
-dotnet restore
-
-# Примените миграции базы данных (автоматически при запуске)
-# Или вручную:
-cd EventRecommendationSystem.API
-dotnet ef database update --project ../EventRecommendationSystem.Infrastructure
-
-# Запустите API
-dotnet run --project EventRecommendationSystem.API
-
-# API будет доступен по адресу: http://localhost:5000
-# Swagger документация: http://localhost:5000/swagger
-```
-
-### Шаг 4: Запуск Frontend
-
-Откройте новый терминал:
-
-```bash
-# Перейдите в директорию frontend
-cd frontend
-
-# Установите зависимости
+# 4. Frontend
+cd frontend/
 npm install
-
-# Запустите development сервер
-npm run dev
-
-# Приложение будет доступно по адресу: http://localhost:3000
+npm start
+# → http://localhost:3000
 ```
 
-## 🎮 Использование приложения
+---
 
-### 1. Регистрация и вход
+## ⚠️ ВАЖНО: Исправление статусов
 
-1. Откройте http://localhost:3000
-2. Нажмите "Зарегистрироваться"
-3. Заполните форму регистрации
-4. Войдите в систему
+Если решения показывают статус **"Отменено"** вместо **"Активно"**, выполни:
 
-### 2. Создание группы
-
-1. На главной странице нажмите "Перейти к группам"
-2. Нажмите "+ Создать группу"
-3. Укажите название и описание группы
-4. Добавьте участников через кнопку "+ Добавить участника"
-
-### 3. Создание решения
-
-1. Откройте группу
-2. Нажмите "+ Создать решение"
-3. Укажите название и описание решения
-4. Добавьте минимум 2 варианта для выбора
-5. Сохраните решение
-
-### 4. Голосование
-
-1. Откройте решение
-2. На вкладке "Голосование" расположите варианты в порядке предпочтения:
-   - Перетаскивайте карточки мышью
-   - Используйте стрелки ▲▼ для перемещения
-3. Нажмите "Отправить голос"
-4. Вы можете изменить свой выбор в любой момент
-
-### 5. Просмотр результатов
-
-1. Перейдите на вкладку "Результаты"
-2. Нажмите "Рассчитать результаты"
-3. Изучите результаты по разным методам:
-   - Метод Кондорсе
-   - Метод Кемени-Янга
-   - Метод Борда
-   - Простое большинство
-4. Прочитайте сравнительный анализ методов
-
-## 📊 Архитектура проекта
-
-```
-event-recommendation-system/
-├── backend/
-│   ├── EventRecommendationSystem.Core/          # Доменные сущности и интерфейсы
-│   │   ├── Entities/                      # User, Group, Decision, Vote и т.д.
-│   │   └── Interfaces/                    # Репозитории и сервисы
-│   ├── EventRecommendationSystem.Infrastructure/# Реализация инфраструктуры
-│   │   ├── Data/                          # EF Core, репозитории
-│   │   └── Services/                      # Алгоритмы голосования
-│   └── EventRecommendationSystem.API/           # Web API контроллеры
-│       ├── Controllers/                   # Auth, Groups, Decisions, Users
-│       └── Program.cs                     # Конфигурация приложения
-├── frontend/
-│   └── src/
-│       ├── components/                    # React компоненты
-│       │   ├── Navbar.jsx
-│       │   ├── VotingInterface.jsx        # Интерфейс голосования
-│       │   └── ResultsDisplay.jsx         # Отображение результатов
-│       ├── pages/                         # Страницы приложения
-│       │   ├── Login.jsx
-│       │   ├── Dashboard.jsx
-│       │   ├── Groups.jsx
-│       │   ├── GroupDetail.jsx
-│       │   ├── CreateDecision.jsx
-│       │   └── DecisionDetail.jsx
-│       ├── context/                       # React Context
-│       │   └── AuthContext.jsx
-│       └── services/                      # API сервисы
-│           └── api.js
-└── docker-compose.yml                     # PostgreSQL контейнер
+```bash
+docker exec -it eventrecommendation_db psql -U postgres -d eventrecommendation
 ```
 
-## 🧮 Алгоритмы голосования
+Затем:
 
-### Метод Кондорсе (Condorcet)
+```sql
+UPDATE "Decisions" SET "Status" = 0 WHERE "IsCompleted" = false;
+```
 
-Альтернатива является **победителем Кондорсе**, если она побеждает каждую другую альтернативу в парном сравнении. Основан на построении матрицы попарных предпочтений.
+Или используй файл: **`fix_decision_statuses.sql`**
 
-**Преимущества:**
-- Отражает истинные предпочтения большинства
-- Интуитивно понятен
+Подробнее: **`URGENT_FIX_GUIDE.md`**
 
-**Недостатки:**
-- Может не существовать победителя (парадокс Кондорсе)
+---
 
-### Метод Кемени-Янга (Kemeny-Young)
+## 📧 Настройка Email
 
-Находит оптимальное ранжирование, максимизирующее согласованность с парными предпочтениями избирателей. Всегда дает однозначный результат.
-
-**Преимущества:**
-- Всегда дает решение
-- Математически обоснован
-- Устойчив к стратегическому голосованию
-
-**Недостатки:**
-- Вычислительно сложен (NP-трудная задача)
-- Для >5 вариантов используется эвристика
-
-### Метод Борда (Borda Count)
-
-Каждому месту присваивается балл: первое место = n-1, второе = n-2, и т.д. Побеждает альтернатива с максимальной суммой.
-
-**Преимущества:**
-- Учитывает интенсивность предпочтений
-- Прост в вычислении
-
-**Недостатки:**
-- Уязвим к стратегическому голосованию
-- Зависит от количества альтернатив
-
-### Простое большинство (Plurality)
-
-Учитывает только первые места в ранжировании.
-
-**Преимущества:**
-- Максимально прост
-
-**Недостатки:**
-- Игнорирует важную информацию
-- Может выбрать альтернативу, нелюбимую большинством
-
-## 🔧 Настройка
-
-### Изменение порта Backend
-
-Измените в `backend/EventRecommendationSystem.API/Properties/launchSettings.json`:
+Отредактируй `backend/EventRecommendationSystem.API/appsettings.json`:
 
 ```json
-"applicationUrl": "http://localhost:НОВЫЙ_ПОРТ"
-```
-
-И обновите `frontend/src/services/api.js`:
-
-```javascript
-const API_URL = 'http://localhost:НОВЫЙ_ПОРТ/api';
-```
-
-### Изменение секретного ключа JWT
-
-Измените в `backend/EventRecommendationSystem.API/appsettings.json`:
-
-```json
-"JwtSettings": {
-  "SecretKey": "ВАШ_НОВЫЙ_ДЛИННЫЙ_СЕКРЕТНЫЙ_КЛЮЧ_МИНИМУМ_32_СИМВОЛА",
-  ...
+{
+  "EmailSettings": {
+    "SenderEmail": "твой-email@gmail.com",
+    "SenderPassword": "твой-app-password"
+  }
 }
 ```
 
-## 🐛 Решение проблем
+Подробнее: **`EMAIL_SETUP_GUIDE.md`**
 
-### Backend не запускается
+---
 
-1. Проверьте, что PostgreSQL запущен: `docker ps` или проверьте службу
-2. Проверьте строку подключения в `appsettings.json`
-3. Проверьте, что порт 5000 не занят
+## 📚 Документация
 
-### Frontend не подключается к Backend
+- **`URGENT_FIX_GUIDE.md`** — исправление статусов и таймера
+- **`EMAIL_SETUP_GUIDE.md`** — настройка email
+- **`TROUBLESHOOTING.md`** — решение проблем
+- **`Описание_Проекта_Система_Рекомендаций.docx`** — описание для диплома
 
-1. Убедитесь, что Backend запущен на http://localhost:5000
-2. Проверьте настройки CORS в `Program.cs`
-3. Откройте консоль браузера для ошибок (F12)
+---
 
-### Ошибки миграций базы данных
+## 🎯 Использование
 
-```bash
-cd backend/EventRecommendationSystem.API
-dotnet ef database drop --force
-dotnet ef database update
-```
+1. **Регистрация** → http://localhost:3000/register
+2. **Создать группу** → Dashboard → "Создать группу"
+3. **Добавить участников** → По email
+4. **Создать решение** → Указать дедлайн, добавить варианты
+5. **Голосовать** → Drag-and-drop ранжирование
+6. **Результаты** → Сравнение 4 методов голосования
 
-## 📝 API Endpoints
+---
 
-### Authentication
-- `POST /api/auth/register` - Регистрация
-- `POST /api/auth/login` - Вход
+## 🛠️ Технологии
 
-### Groups
-- `GET /api/groups` - Список групп пользователя
-- `GET /api/groups/{id}` - Детали группы
-- `POST /api/groups` - Создать группу
-- `POST /api/groups/{id}/members` - Добавить участника
+**Backend:** .NET 8, Entity Framework Core, PostgreSQL, JWT, MailKit  
+**Frontend:** React 18, React Router, Axios, React Beautiful DND  
+**DevOps:** Docker, Docker Compose
 
-### Decisions
-- `GET /api/decisions/group/{groupId}` - Решения группы
-- `GET /api/decisions/{id}` - Детали решения
-- `POST /api/decisions` - Создать решение
-- `POST /api/decisions/{id}/alternatives` - Добавить вариант
-- `POST /api/decisions/{id}/vote` - Проголосовать
-- `POST /api/decisions/{id}/calculate?method=all` - Рассчитать результаты
-
-### Users
-- `GET /api/users` - Список пользователей
-- `GET /api/users/{id}` - Информация о пользователе
-
-## 📚 Полезные ссылки
-
-- [Теория социального выбора](https://ru.wikipedia.org/wiki/Теория_социального_выбора)
-- [Метод Кондорсе](https://ru.wikipedia.org/wiki/Метод_Кондорсе)
-- [Метод Кемени-Янга](https://en.wikipedia.org/wiki/Kemeny–Young_method)
-
-## 📄 Лицензия
-
-Дипломный проект для образовательных целей.
+---
 
 ## 👨‍💻 Автор
 
-Дипломный проект по теме "Разработка системы поддержки принятия групповых решений на основе анализа пользовательских предпочтений"
+Дипломный проект, 2026
+
+---
+
+**Event Recommendation System — делаем групповые решения справедливыми! 🎉**

@@ -36,10 +36,10 @@ public class DecisionsController : ControllerBase
         try
         {
             var decision = await _decisionRepository.GetByIdAsync(decisionId);
-
-            if (decision != null &&
-                !decision.IsCompleted &&
-                decision.Deadline.HasValue &&
+            
+            if (decision != null && 
+                !decision.IsCompleted && 
+                decision.Deadline.HasValue && 
                 decision.Deadline.Value <= DateTime.UtcNow)
             {
                 Console.WriteLine($"[AUTO COMPLETE] Дедлайн истёк, завершаем решение: {decisionId}");
@@ -87,10 +87,10 @@ public class DecisionsController : ControllerBase
         try
         {
             Console.WriteLine($"[GET DECISION] Запрос решения: {id}");
-
+            
             // Проверяем и автоматически завершаем, если дедлайн истёк
             await CheckAndCompleteExpiredDecisions(id);
-
+            
             var userId = GetUserId();
             var decision = await _decisionRepository.GetByIdAsync(id);
 
@@ -101,7 +101,7 @@ public class DecisionsController : ControllerBase
             }
 
             Console.WriteLine($"[GET DECISION] Найдено решение: {decision.Title}");
-            Console.WriteLine($"[GET DECISION] Статус: {decision.Status}");
+            Console.WriteLine($"[GET DECISION] Статус: {decision.Status} (числовое значение: {(int)decision.Status})");
             Console.WriteLine($"[GET DECISION] IsCompleted: {decision.IsCompleted}");
 
             var isMember = await _groupRepository.IsUserMemberAsync(decision.GroupId, userId);
@@ -121,7 +121,7 @@ public class DecisionsController : ControllerBase
                 decision.CreatedAt,
                 decision.Deadline,
                 decision.IsCompleted,
-                decision.Status,
+                Status = decision.Status.ToString(), // ВАЖНО: возвращаем строку, а не число!
                 Alternatives = decision.Alternatives.Select(a => new
                 {
                     a.Id,
@@ -175,7 +175,7 @@ public class DecisionsController : ControllerBase
         try
         {
             Console.WriteLine($"[CREATE DECISION] Создание решения: {request.Title}");
-
+            
             var userId = GetUserId();
             var isMember = await _groupRepository.IsUserMemberAsync(request.GroupId, userId);
 
@@ -194,13 +194,17 @@ public class DecisionsController : ControllerBase
                 CreatedAt = DateTime.UtcNow,
                 Deadline = request.Deadline,
                 IsCompleted = false,
-                Status = DecisionStatus.Active  // ЯВНО устанавливаем Active!
+                Status = DecisionStatus.Active
             };
 
-            Console.WriteLine($"[CREATE DECISION] Статус решения: {decision.Status}");
+            Console.WriteLine($"[CREATE DECISION] Статус решения ПЕРЕД сохранением: {decision.Status} (число: {(int)decision.Status})");
             Console.WriteLine($"[CREATE DECISION] IsCompleted: {decision.IsCompleted}");
 
             await _decisionRepository.CreateAsync(decision);
+
+            // Проверяем статус ПОСЛЕ сохранения
+            var savedDecision = await _decisionRepository.GetByIdAsync(decision.Id);
+            Console.WriteLine($"[CREATE DECISION] Статус ПОСЛЕ сохранения: {savedDecision?.Status} (число: {(int)(savedDecision?.Status ?? DecisionStatus.Active)})");
 
             Console.WriteLine($"[CREATE DECISION] Решение создано успешно: {decision.Id}");
 
@@ -209,7 +213,7 @@ public class DecisionsController : ControllerBase
                 decision.Id,
                 decision.Title,
                 decision.Description,
-                decision.Status  // Вернем статус для проверки
+                Status = decision.Status.ToString()
             });
         }
         catch (Exception ex)
@@ -288,10 +292,10 @@ public class DecisionsController : ControllerBase
         {
             // Обновление существующего голоса
             existingVote.UpdatedAt = DateTime.UtcNow;
-
+            
             // Удаление старых рангов
             existingVote.Rankings.Clear();
-
+            
             // Добавление новых рангов
             foreach (var ranking in request.Rankings)
             {
@@ -376,27 +380,45 @@ public class DecisionsController : ControllerBase
     [HttpPut("{id}/complete")]
     public async Task<IActionResult> CompleteDecision(Guid id)
     {
-        var userId = GetUserId();
-        var decision = await _decisionRepository.GetByIdAsync(id);
-
-        if (decision == null)
+        try
         {
-            return NotFound(new { message = "Решение не найдено" });
+            Console.WriteLine($"[COMPLETE DECISION] Запрос на завершение: {id}");
+            
+            var userId = GetUserId();
+            var decision = await _decisionRepository.GetByIdAsync(id);
+
+            if (decision == null)
+            {
+                Console.WriteLine($"[COMPLETE DECISION] Решение не найдено");
+                return NotFound(new { message = "Решение не найдено" });
+            }
+
+            var group = await _groupRepository.GetByIdAsync(decision.GroupId);
+            if (group == null || group.CreatorId != userId)
+            {
+                Console.WriteLine($"[COMPLETE DECISION] Доступ запрещён - пользователь не создатель группы");
+                return Forbid();
+            }
+
+            if (decision.IsCompleted)
+            {
+                Console.WriteLine($"[COMPLETE DECISION] Решение уже завершено");
+                return BadRequest(new { message = "Голосование уже завершено" });
+            }
+
+            decision.Status = DecisionStatus.Completed;
+            decision.IsCompleted = true;
+            await _decisionRepository.UpdateAsync(decision);
+
+            Console.WriteLine($"[COMPLETE DECISION] Голосование успешно завершено");
+
+            return Ok(new { message = "Решение завершено" });
         }
-
-        var group = await _groupRepository.GetByIdAsync(decision.GroupId);
-        var userMembership = group?.Members.FirstOrDefault(m => m.UserId == userId);
-
-        if (userMembership == null || (!userMembership.IsAdmin && group.CreatorId != userId))
+        catch (Exception ex)
         {
-            return Forbid();
+            Console.WriteLine($"[COMPLETE DECISION ERROR] {ex.Message}");
+            return StatusCode(500, new { message = "Ошибка сервера" });
         }
-
-        decision.Status = DecisionStatus.Completed;
-        decision.IsCompleted = true;
-        await _decisionRepository.UpdateAsync(decision);
-
-        return Ok(new { message = "Решение завершено" });
     }
 
     [HttpDelete("{id}")]
@@ -405,7 +427,7 @@ public class DecisionsController : ControllerBase
         try
         {
             Console.WriteLine($"[DELETE DECISION] Запрос на удаление: {id}");
-
+            
             var userId = GetUserId();
             var decision = await _decisionRepository.GetByIdAsync(id);
 
@@ -433,7 +455,6 @@ public class DecisionsController : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine($"[DELETE DECISION ERROR] {ex.Message}");
-            Console.WriteLine($"[DELETE DECISION ERROR] StackTrace: {ex.StackTrace}");
             return StatusCode(500, new { message = "Ошибка удаления решения" });
         }
     }
