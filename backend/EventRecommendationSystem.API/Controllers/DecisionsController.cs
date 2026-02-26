@@ -394,9 +394,22 @@ public class DecisionsController : ControllerBase
             }
 
             var group = await _groupRepository.GetByIdAsync(decision.GroupId);
-            if (group == null || group.CreatorId != userId)
+            if (group == null)
             {
-                Console.WriteLine($"[COMPLETE DECISION] Доступ запрещён - пользователь не создатель группы");
+                Console.WriteLine($"[COMPLETE DECISION] Группа не найдена");
+                return NotFound(new { message = "Группа не найдена" });
+            }
+
+            // Проверяем: создатель ИЛИ админ
+            var isCreator = group.CreatorId == userId;
+            var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+            var isAdmin = member?.IsAdmin ?? false;
+
+            Console.WriteLine($"[COMPLETE DECISION] Права: isCreator={isCreator}, isAdmin={isAdmin}");
+
+            if (!isCreator && !isAdmin)
+            {
+                Console.WriteLine($"[COMPLETE DECISION] Доступ запрещён - не создатель и не админ");
                 return Forbid();
             }
 
@@ -437,11 +450,24 @@ public class DecisionsController : ControllerBase
                 return NotFound(new { message = "Решение не найдено" });
             }
 
-            // Проверяем, что пользователь - создатель группы
+            // Проверяем, что пользователь - создатель группы ИЛИ админ
             var group = await _groupRepository.GetByIdAsync(decision.GroupId);
-            if (group == null || group.CreatorId != userId)
+            if (group == null)
             {
-                Console.WriteLine($"[DELETE DECISION] Доступ запрещён - пользователь не создатель группы");
+                Console.WriteLine($"[DELETE DECISION] Группа не найдена");
+                return NotFound(new { message = "Группа не найдена" });
+            }
+
+            // Проверяем: создатель ИЛИ админ
+            var isCreator = group.CreatorId == userId;
+            var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+            var isAdmin = member?.IsAdmin ?? false;
+
+            Console.WriteLine($"[DELETE DECISION] Права: isCreator={isCreator}, isAdmin={isAdmin}");
+
+            if (!isCreator && !isAdmin)
+            {
+                Console.WriteLine($"[DELETE DECISION] Доступ запрещён - не создатель и не админ");
                 return Forbid();
             }
 

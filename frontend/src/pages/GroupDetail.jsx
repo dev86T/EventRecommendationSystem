@@ -98,12 +98,23 @@ const GroupDetail = () => {
     user => !group.members.some(member => member.userId === user.id)
   );
 
+  // Проверяем, является ли пользователь создателем или админом
   const isCreator = group.creatorId === user?.id || String(group.creatorId) === String(user?.id);
+  
+  // Проверяем, является ли пользователь админом группы
+  const currentMember = group.members.find(m => m.userId === user?.id || String(m.userId) === String(user?.id));
+  const isAdmin = currentMember?.isAdmin || false;
+  
+  // Может удалять: создатель ИЛИ админ
+  const canDelete = isCreator || isAdmin;
 
-  console.log('[GROUP DETAIL] isCreator check:', {
+  console.log('[GROUP DETAIL] Permissions check:', {
     creatorId: group.creatorId,
     userId: user?.id,
-    isCreator
+    isCreator,
+    isAdmin,
+    canDelete,
+    currentMember
   });
 
   return (
@@ -225,7 +236,7 @@ const GroupDetail = () => {
                       </div>
                     </Link>
                     
-                    {isCreator && (
+                    {canDelete && (
                       <button
                         className="btn btn-danger btn-sm"
                         onClick={(e) => handleDeleteDecision(decision.id, decision.title, e)}
