@@ -8,6 +8,9 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    
+    // Уникальный код для поиска пользователя (формат: ABC12345)
+    public string UserCode { get; set; } = string.Empty;
 
     // Navigation properties
     public ICollection<GroupMember> GroupMemberships { get; set; } = new List<GroupMember>();

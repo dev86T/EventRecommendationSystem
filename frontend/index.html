@@ -17,31 +17,24 @@
         --border-color: #e2e8f0;
         --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
+        --input-bg: #ffffff;
+        --input-text: #1a1a1a;
       }
       
-      /* Dark Theme - темно-серый фон, белые буквы */
-:root[data-theme="dark"] {
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #2d2d2d;
-  --bg-card: #3a3a3a;
-  --text-primary: #ffffff;      /* БЕЛЫЙ! */
-  --text-secondary: #e0e0e0;    /* Светло-серый */
-  --text-muted: #b0b0b0;        /* Серый */
-  --border-color: #555555;
-  --input-bg: #2d2d2d;          /* Для форм */
-  --input-text: #ffffff;        /* Белый текст в формах */
-}
-
-input, textarea, select {
-  background-color: var(--input-bg) !important;
-  color: var(--input-text) !important;
-  border: 1px solid var(--border-color) !important;
-}
-
-input::placeholder, textarea::placeholder {
-  color: var(--text-muted) !important;
-  opacity: 0.7;
-}
+      /* Dark Theme - темно-серый фон, БЕЛЫЕ буквы */
+      :root[data-theme="dark"] {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #2d2d2d;
+        --bg-card: #3a3a3a;
+        --text-primary: #ffffff;
+        --text-secondary: #e0e0e0;
+        --text-muted: #b0b0b0;
+        --border-color: #555555;
+        --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.6);
+        --input-bg: #2d2d2d;
+        --input-text: #ffffff;
+      }
       
       * {
         margin: 0;
@@ -56,6 +49,18 @@ input::placeholder, textarea::placeholder {
         margin: 0;
         padding: 0;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      }
+      
+      /* Критически важно для форм! */
+      input, textarea, select {
+        background-color: var(--input-bg) !important;
+        color: var(--input-text) !important;
+        border: 1px solid var(--border-color) !important;
+      }
+      
+      input::placeholder, textarea::placeholder {
+        color: var(--text-muted) !important;
+        opacity: 0.7;
       }
       
       .theme-toggle-btn {

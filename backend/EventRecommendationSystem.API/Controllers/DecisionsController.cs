@@ -123,7 +123,7 @@ public class DecisionsController : ControllerBase
                 decision.IsCompleted,
                 decision.IsBlindVoting,
                 decision.IsAnonymous,
-                Status = decision.Status.ToString(), // ВАЖНО: возвращаем строку, а не число!
+                Status = decision.Status.ToString(),
                 Alternatives = decision.Alternatives.Select(a => new
                 {
                     a.Id,
