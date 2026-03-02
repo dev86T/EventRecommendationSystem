@@ -72,7 +72,7 @@ public class GroupsController : ControllerBase
             group.Description,
             group.CreatedAt,
             group.IsActive,
-            CreatorId = group.CreatorId,
+            CreatorId = group.CreatorId,  // ДОБАВЛЕНО!
             Creator = new
             {
                 group.Creator.Id,

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { groupsAPI, decisionsAPI, usersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import './GroupDetail.css';
@@ -75,7 +74,7 @@ const GroupDetail = () => {
 
     try {
       setDeletingDecision(decisionId);
-      await axios.delete(`http://localhost:5000/api/decisions/${decisionId}`);
+      await decisionsAPI.delete(decisionId);
       alert('Решение успешно удалено');
       loadData();
     } catch (error) {
