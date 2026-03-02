@@ -32,8 +32,10 @@ const Dashboard = () => {
     <div className="container dashboard">
       <div className="dashboard-header">
         <div>
-          <h1>Добро пожаловать, {user?.username}! 👋</h1>
-          <p className="dashboard-subtitle">
+          <h1 style={{ color: 'var(--text-primary)' }}>
+            Добро пожаловать, {user?.username}! 👋
+          </h1>
+          <p className="dashboard-subtitle" style={{ color: 'var(--text-secondary)' }}>
             Система рекомендаций мероприятий на основе методов Condorcet и Kemeny-Young
           </p>
         </div>
@@ -42,8 +44,10 @@ const Dashboard = () => {
       <div className="dashboard-grid">
         <div className="dashboard-card">
           <div className="dashboard-card-icon">👥</div>
-          <h3>Мои группы</h3>
-          <p className="dashboard-card-value">{groups.length}</p>
+          <h3 style={{ color: 'var(--text-primary)' }}>Мои группы</h3>
+          <p className="dashboard-card-value" style={{ color: 'var(--text-primary)' }}>
+            {groups.length}
+          </p>
           <Link to="/groups" className="btn btn-primary">
             Перейти к группам
           </Link>
@@ -51,16 +55,16 @@ const Dashboard = () => {
 
         <div className="dashboard-card">
           <div className="dashboard-card-icon">📊</div>
-          <h3>О системе</h3>
-          <p className="dashboard-card-text">
+          <h3 style={{ color: 'var(--text-primary)' }}>О системе</h3>
+          <p className="dashboard-card-text" style={{ color: 'var(--text-secondary)' }}>
             Используйте методы коллективного выбора для принятия групповых решений
           </p>
         </div>
 
         <div className="dashboard-card">
           <div className="dashboard-card-icon">🎯</div>
-          <h3>Методы голосования</h3>
-          <ul className="methods-list">
+          <h3 style={{ color: 'var(--text-primary)' }}>Методы голосования</h3>
+          <ul className="methods-list" style={{ color: 'var(--text-primary)' }}>
             <li><strong>Condorcet</strong> - попарное сравнение</li>
             <li><strong>Kemeny-Young</strong> - оптимальное ранжирование</li>
             <li><strong>Borda</strong> - балльная система</li>
@@ -71,7 +75,7 @@ const Dashboard = () => {
 
       {groups.length > 0 && (
         <div className="recent-groups">
-          <h2>Последние группы</h2>
+          <h2 style={{ color: 'var(--text-primary)' }}>Последние группы</h2>
           <div className="grid grid-3">
             {groups.slice(0, 3).map(group => (
               <Link 
