@@ -121,6 +121,8 @@ public class DecisionsController : ControllerBase
                 decision.CreatedAt,
                 decision.Deadline,
                 decision.IsCompleted,
+                decision.IsBlindVoting,
+                decision.IsAnonymous,
                 Status = decision.Status.ToString(), // ВАЖНО: возвращаем строку, а не число!
                 Alternatives = decision.Alternatives.Select(a => new
                 {
@@ -194,11 +196,15 @@ public class DecisionsController : ControllerBase
                 CreatedAt = DateTime.UtcNow,
                 Deadline = request.Deadline,
                 IsCompleted = false,
-                Status = DecisionStatus.Active
+                Status = DecisionStatus.Active,
+                IsBlindVoting = request.IsBlindVoting,
+                IsAnonymous = request.IsAnonymous
             };
 
             Console.WriteLine($"[CREATE DECISION] Статус решения ПЕРЕД сохранением: {decision.Status} (число: {(int)decision.Status})");
             Console.WriteLine($"[CREATE DECISION] IsCompleted: {decision.IsCompleted}");
+            Console.WriteLine($"[CREATE DECISION] IsBlindVoting: {decision.IsBlindVoting}");
+            Console.WriteLine($"[CREATE DECISION] IsAnonymous: {decision.IsAnonymous}");
 
             await _decisionRepository.CreateAsync(decision);
 
@@ -514,6 +520,8 @@ public class CreateDecisionRequest
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public DateTime? Deadline { get; set; }
+    public bool IsBlindVoting { get; set; }
+    public bool IsAnonymous { get; set; }
 }
 
 public class AddAlternativeRequest

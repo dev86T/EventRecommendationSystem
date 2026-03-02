@@ -10,10 +10,6 @@ public class Decision
     public DateTime? Deadline { get; set; }
     public bool IsCompleted { get; set; } = false;
     public DecisionStatus Status { get; set; } = DecisionStatus.Active;
-    
-    // Новые поля
-    public bool IsBlindVoting { get; set; } = false;
-    public bool IsAnonymous { get; set; } = false;
 
     // Navigation properties
     public Group Group { get; set; } = null!;
