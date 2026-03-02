@@ -8,6 +8,9 @@ public class Group
     public Guid CreatorId { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsActive { get; set; } = true;
+    
+    // Новое поле
+    public string? ColorScheme { get; set; }
 
     // Navigation properties
     public User Creator { get; set; } = null!;
