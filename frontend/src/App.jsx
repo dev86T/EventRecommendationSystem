@@ -10,6 +10,9 @@ import GroupDetail from './pages/GroupDetail';
 import DecisionDetail from './pages/DecisionDetail';
 import CreateDecision from './pages/CreateDecision';
 import Navbar from './components/Navbar';
+import { ThemeProvider } from './context/ThemeContext';
+import ThemeToggle from './components/ThemeToggle';
+import './styles/theme.css';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -88,9 +91,12 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ThemeProvider>
+      <BrowserRouter>
+        {/* routes */}
+      </BrowserRouter>
+      <ThemeToggle />
+    </ThemeProvider>
   );
 }
 
