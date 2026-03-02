@@ -225,22 +225,88 @@ textarea.form-control {
   color: white;
 }
 
-/* Dark Theme Support */
-.container, .page-card, .card, .decision-card, .group-card, .info-card {
-  background: var(--bg-secondary);
+/* Dark Theme Support - улучшенная версия */
+.container, .page-card, .card, .decision-card, .group-card, .info-card, .alternative-card {
+  background: var(--bg-card);
   color: var(--text-primary);
   transition: all 0.3s ease;
+  box-shadow: var(--shadow);
 }
 
-.form-control, input[type="text"], input[type="number"], input[type="email"], 
-input[type="password"], textarea, select {
-  background: var(--bg-secondary) !important;
+.container:hover, .card:hover, .decision-card:hover, .group-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+/* Формы и инпуты */
+.form-control, 
+input[type="text"], 
+input[type="number"], 
+input[type="email"], 
+input[type="password"], 
+textarea, 
+select {
+  background: var(--bg-card) !important;
   color: var(--text-primary) !important;
-  border-color: var(--border-color) !important;
+  border: 1px solid var(--border-color) !important;
+  transition: all 0.2s ease;
 }
 
-.text-secondary, .help-text {
+.form-control:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #667eea !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Текст */
+.text-secondary, .help-text, .section-description {
   color: var(--text-secondary) !important;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Навигация и хедер */
+nav, header, .navbar {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Модальные окна */
+.modal, .modal-content {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* Таблицы */
+table {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+th, td {
+  border-color: var(--border-color);
+}
+
+/* Бейджи */
+.badge {
+  filter: brightness(1);
+  transition: filter 0.3s ease;
+}
+
+:root[data-theme="dark"] .badge {
+  filter: brightness(1.2);
+}
+
+/* Плейсхолдеры */
+::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.7;
 }
 
 /* Smooth animations */
@@ -249,8 +315,13 @@ input[type="password"], textarea, select {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 .decision-card, .group-card {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.5s ease-out;
   animation-fill-mode: both;
 }
 
@@ -260,12 +331,22 @@ input[type="password"], textarea, select {
 .decision-card:nth-child(4) { animation-delay: 0.2s; }
 .decision-card:nth-child(5) { animation-delay: 0.25s; }
 
-.card:hover {
+.card:hover, .decision-card:hover, .group-card:hover {
   transform: translateY(-4px);
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .btn:hover {
   transform: translateY(-2px);
   transition: all 0.2s ease;
+}
+
+/* Прогресс бар если добавишь */
+.progress-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #667eea, #764ba2);
 }

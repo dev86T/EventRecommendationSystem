@@ -256,6 +256,89 @@ const DecisionDetail = () => {
             </div>
           )}
 
+          {/* Прогресс бар голосования */}
+          {!decision.isCompleted && decision.group && (
+            <div style={{
+              background: 'var(--bg-card)',
+              padding: '20px',
+              borderRadius: '12px',
+              marginTop: '20px',
+              marginBottom: '20px',
+              border: '1px solid var(--border-color)',
+              boxShadow: 'var(--shadow)'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: '12px'
+              }}>
+                <span style={{ fontWeight: '600', fontSize: '16px' }}>
+                  📊 Прогресс голосования
+                </span>
+                <span style={{ 
+                  fontWeight: 'bold', 
+                  fontSize: '18px',
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  {decision.votes?.length || 0} / {decision.group.members?.length || 0}
+                </span>
+              </div>
+              
+              <div style={{
+                height: '12px',
+                background: 'var(--border-color)',
+                borderRadius: '6px',
+                overflow: 'hidden',
+                marginBottom: '16px'
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${Math.round(((decision.votes?.length || 0) / (decision.group.members?.length || 1)) * 100)}%`,
+                  background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                  transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                  borderRadius: '6px',
+                  boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)'
+                }} />
+              </div>
+              
+              <div style={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: '8px' 
+              }}>
+                {decision.group.members?.map(member => {
+                  const hasVoted = decision.votes?.some(v => v.userId === member.userId);
+                  return (
+                    <div key={member.userId} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      background: hasVoted 
+                        ? 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)' 
+                        : 'var(--border-color)',
+                      color: hasVoted ? 'white' : 'var(--text-secondary)',
+                      borderRadius: '16px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      transition: 'all 0.3s ease',
+                      boxShadow: hasVoted ? '0 2px 4px rgba(72, 187, 120, 0.3)' : 'none'
+                    }}>
+                      <span style={{ fontSize: '14px' }}>
+                        {hasVoted ? '✓' : '○'}
+                      </span>
+                      {member.user?.username || 'Участник'}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="decision-meta">
             <span className={`badge ${
               decision.status === 'Active' ? 'badge-success' : 
