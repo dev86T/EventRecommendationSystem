@@ -387,3 +387,37 @@ th, td {
 .progress-fill {
   background: linear-gradient(90deg, #667eea, #764ba2);
 }
+
+/* ДОПОЛНИТЕЛЬНАЯ ГАРАНТИЯ - все тексты используют переменные */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary) !important;
+}
+
+p, span, div, a, li, label, strong, em {
+  color: inherit;
+}
+
+/* Карточки */
+.card, .page-card, .info-card, .decision-card, .group-card {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Вся темная тема должна иметь белый текст */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3,
+:root[data-theme="dark"] h4,
+:root[data-theme="dark"] h5,
+:root[data-theme="dark"] h6,
+:root[data-theme="dark"] p,
+:root[data-theme="dark"] span:not(.badge),
+:root[data-theme="dark"] div,
+:root[data-theme="dark"] label,
+:root[data-theme="dark"] a {
+  color: var(--text-primary) !important;
+}
