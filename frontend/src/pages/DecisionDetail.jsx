@@ -419,20 +419,46 @@ const DecisionDetail = () => {
 
         {activeTab === 'results' && (
           <div className="results-tab">
-            <div className="results-actions">
-              <button 
-                className="btn btn-primary"
-                onClick={() => calculateResults('all')}
-                disabled={calculatingResults || (decision.votes?.length || 0) === 0}
-              >
-                {calculatingResults ? 'Расчет...' : 'Рассчитать результаты'}
-              </button>
-              {(decision.votes?.length || 0) === 0 && (
-                <p className="help-text">Необходимо минимум 1 голос для расчета результатов</p>
-              )}
-            </div>
+            {decision.isBlindVoting && !decision.isCompleted ? (
+              <div style={{
+                padding: '40px',
+                textAlign: 'center',
+                background: 'var(--bg-secondary)',
+                borderRadius: '12px',
+                border: '2px dashed #cbd5e0'
+              }}>
+                <div style={{ fontSize: '64px', marginBottom: '20px' }}>👁️</div>
+                <h3 style={{ marginBottom: '16px' }}>Слепое голосование</h3>
+                <p style={{ fontSize: '16px', color: '#718096', maxWidth: '500px', margin: '0 auto' }}>
+                  Результаты будут доступны после завершения голосования. 
+                  Это помогает избежать влияния промежуточных результатов на выбор участников.
+                </p>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={() => setActiveTab('vote')}
+                  style={{ marginTop: '24px' }}
+                >
+                  ← Вернуться к голосованию
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="results-actions">
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => calculateResults('all')}
+                    disabled={calculatingResults || (decision.votes?.length || 0) === 0}
+                  >
+                    {calculatingResults ? 'Расчет...' : 'Рассчитать результаты'}
+                  </button>
+                  {(decision.votes?.length || 0) === 0 && (
+                    <p className="help-text">Необходимо минимум 1 голос для расчета результатов</p>
+                  )}
+                </div>
 
-            {results && <ResultsDisplay results={results} alternatives={decision.alternatives} />}
+                {results && <ResultsDisplay results={results} alternatives={decision.alternatives} />}
+              </>
+            )}
           </div>
         )}
 
@@ -455,11 +481,26 @@ const DecisionDetail = () => {
 
             <div className="info-card">
               <h3>Голоса участников ({decision.votes?.length || 0})</h3>
+              {decision.isAnonymous && (
+                <p style={{ 
+                  padding: '12px', 
+                  background: '#fef3c7', 
+                  borderRadius: '8px', 
+                  marginBottom: '16px',
+                  color: '#92400e'
+                }}>
+                  🕵️ Анонимное голосование: имена участников скрыты
+                </p>
+              )}
               <div className="votes-list">
-                {decision.votes?.map(vote => (
+                {decision.votes?.map((vote, index) => (
                   <div key={vote.id} className="vote-item">
                     <div className="vote-user">
-                      <strong>{vote.username}</strong>
+                      <strong>
+                        {decision.isAnonymous 
+                          ? `🕵️ Участник #${index + 1}` 
+                          : vote.username}
+                      </strong>
                       <span>{new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
                     </div>
                     <div className="vote-rankings">

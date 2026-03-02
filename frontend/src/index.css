@@ -224,3 +224,48 @@ textarea.form-control {
   background: #dc3545;
   color: white;
 }
+
+/* Dark Theme Support */
+.container, .page-card, .card, .decision-card, .group-card, .info-card {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+.form-control, input[type="text"], input[type="number"], input[type="email"], 
+input[type="password"], textarea, select {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.text-secondary, .help-text {
+  color: var(--text-secondary) !important;
+}
+
+/* Smooth animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.decision-card, .group-card {
+  animation: fadeIn 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.decision-card:nth-child(1) { animation-delay: 0.05s; }
+.decision-card:nth-child(2) { animation-delay: 0.1s; }
+.decision-card:nth-child(3) { animation-delay: 0.15s; }
+.decision-card:nth-child(4) { animation-delay: 0.2s; }
+.decision-card:nth-child(5) { animation-delay: 0.25s; }
+
+.card:hover {
+  transform: translateY(-4px);
+  transition: transform 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
+}

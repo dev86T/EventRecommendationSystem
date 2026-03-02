@@ -5,9 +5,76 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Система Рекомендаций Мероприятий</title>
+    <style>
+      :root[data-theme="light"] {
+        --bg-primary: #f5f7fb;
+        --bg-secondary: #ffffff;
+        --text-primary: #2d3748;
+        --text-secondary: #718096;
+        --border-color: #e2e8f0;
+      }
+      :root[data-theme="dark"] {
+        --bg-primary: #1a202c;
+        --bg-secondary: #2d3748;
+        --text-primary: #f7fafc;
+        --text-secondary: #cbd5e0;
+        --border-color: #4a5568;
+      }
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        transition: background-color 0.3s ease, color 0.3s ease;
+        margin: 0;
+        padding: 0;
+      }
+      .theme-toggle-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        font-size: 28px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transition: transform 0.3s ease;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .theme-toggle-btn:hover {
+        transform: scale(1.1) rotate(15deg);
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      (function() {
+        const html = document.documentElement;
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+        
+        window.addEventListener('DOMContentLoaded', () => {
+          const btn = document.createElement('button');
+          btn.className = 'theme-toggle-btn';
+          btn.innerHTML = savedTheme === 'dark' ? '☀️' : '🌙';
+          btn.title = 'Переключить тему';
+          btn.onclick = () => {
+            const current = html.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            btn.innerHTML = next === 'dark' ? '☀️' : '🌙';
+          };
+          document.body.appendChild(btn);
+        });
+      })();
+    </script>
   </body>
 </html>
