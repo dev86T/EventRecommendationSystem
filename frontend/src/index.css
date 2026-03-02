@@ -225,7 +225,7 @@ textarea.form-control {
   color: white;
 }
 
-/* Dark Theme Support - улучшенная версия */
+/* Dark Theme Support - ПОЛНОЕ исправление */
 .container, .page-card, .card, .decision-card, .group-card, .info-card, .alternative-card {
   background: var(--bg-card);
   color: var(--text-primary);
@@ -237,16 +237,17 @@ textarea.form-control {
   box-shadow: var(--shadow-hover);
 }
 
-/* Формы и инпуты */
+/* КРИТИЧЕСКИ ВАЖНО - Формы и инпуты */
 .form-control, 
 input[type="text"], 
 input[type="number"], 
 input[type="email"], 
 input[type="password"], 
 textarea, 
-select {
-  background: var(--bg-card) !important;
-  color: var(--text-primary) !important;
+select,
+input {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
   border: 1px solid var(--border-color) !important;
   transition: all 0.2s ease;
 }
@@ -258,6 +259,24 @@ select:focus {
   border-color: #667eea !important;
   outline: none;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+input::placeholder, 
+textarea::placeholder,
+select option {
+  color: var(--text-muted) !important;
+  opacity: 0.7;
+}
+
+/* Селекты (dropdown) */
+select {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+}
+
+select option {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
 }
 
 /* Текст */
@@ -291,9 +310,10 @@ table {
 
 th, td {
   border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
-/* Бейджи */
+/* Бейджи и метки */
 .badge {
   filter: brightness(1);
   transition: filter 0.3s ease;
@@ -301,6 +321,23 @@ th, td {
 
 :root[data-theme="dark"] .badge {
   filter: brightness(1.2);
+}
+
+/* Весь текст в dark mode должен быть белым! */
+:root[data-theme="dark"] * {
+  color: var(--text-primary);
+}
+
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3,
+:root[data-theme="dark"] h4,
+:root[data-theme="dark"] h5,
+:root[data-theme="dark"] p,
+:root[data-theme="dark"] span,
+:root[data-theme="dark"] div,
+:root[data-theme="dark"] label {
+  color: var(--text-primary) !important;
 }
 
 /* Плейсхолдеры */
@@ -341,7 +378,7 @@ th, td {
   transition: all 0.2s ease;
 }
 
-/* Прогресс бар если добавишь */
+/* Прогресс бар */
 .progress-bar {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
