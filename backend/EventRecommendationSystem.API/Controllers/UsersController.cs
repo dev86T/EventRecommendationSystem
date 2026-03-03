@@ -33,7 +33,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetUser(Guid id)
     {
         var user = await _userRepository.GetByIdAsync(id);
-        
+
         if (user == null)
         {
             return NotFound(new { message = "Пользователь не найден" });
@@ -45,6 +45,24 @@ public class UsersController : ControllerBase
             user.Username,
             user.Email,
             user.CreatedAt
+        });
+    }
+
+    [HttpGet("by-code/{code}")]
+    public async Task<IActionResult> GetUserByCode(string code)
+    {
+        var user = await _userRepository.GetByUserCodeAsync(code.ToUpper());
+
+        if (user == null)
+        {
+            return NotFound(new { message = "Пользователь с таким кодом не найден" });
+        }
+
+        return Ok(new
+        {
+            user.Id,
+            user.Username,
+            user.UserCode
         });
     }
 }

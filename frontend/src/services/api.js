@@ -33,6 +33,7 @@ export const authAPI = {
 export const usersAPI = {
   getAll: () => api.get('/users'),
   getById: (id) => api.get(`/users/${id}`),
+  findByCode: (code) => api.get(`/users/by-code/${code}`),
 };
 
 // Groups
@@ -40,7 +41,7 @@ export const groupsAPI = {
   getAll: () => api.get('/groups'),
   getById: (id) => api.get(`/groups/${id}`),
   create: (data) => api.post('/groups', data),
-  addMember: (groupId, userId) => api.post(`/groups/${groupId}/members`, { userId }),
+  addMember: (groupId, userCode) => api.post(`/groups/${groupId}/members`, { userCode }),
   removeMember: (groupId, userId) => api.delete(`/groups/${groupId}/members/${userId}`),
 };
 

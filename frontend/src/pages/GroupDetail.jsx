@@ -24,10 +24,12 @@ const GroupDetail = () => {
   const { user } = useAuth();
   const [group, setGroup] = useState(null);
   const [decisions, setDecisions] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState('');
+  const [userCodeInput, setUserCodeInput] = useState('');
+  const [foundUser, setFoundUser] = useState(null);
+  const [searchError, setSearchError] = useState('');
+  const [searching, setSearching] = useState(false);
   const [deletingDecision, setDeletingDecision] = useState(null);
 
   useEffect(() => {
@@ -36,15 +38,13 @@ const GroupDetail = () => {
 
   const loadData = async () => {
     try {
-      const [groupRes, decisionsRes, usersRes] = await Promise.all([
+      const [groupRes, decisionsRes] = await Promise.all([
         groupsAPI.getById(id),
         decisionsAPI.getGroupDecisions(id),
-        usersAPI.getAll()
       ]);
-      
+
       setGroup(groupRes.data);
       setDecisions(decisionsRes.data);
-      setUsers(usersRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -52,16 +52,43 @@ const GroupDetail = () => {
     }
   };
 
+  const handleSearchUser = async () => {
+    const code = userCodeInput.trim().toUpperCase();
+    if (code.length !== 5) {
+      setSearchError('Код должен содержать 5 символов');
+      setFoundUser(null);
+      return;
+    }
+    setSearching(true);
+    setSearchError('');
+    setFoundUser(null);
+    try {
+      const res = await usersAPI.findByCode(code);
+      setFoundUser(res.data);
+    } catch (error) {
+      if (error.response?.status === 404) {
+        setSearchError('Пользователь с таким кодом не найден');
+      } else {
+        setSearchError('Ошибка поиска');
+      }
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const handleAddMember = async (e) => {
     e.preventDefault();
+    if (!foundUser) return;
     try {
-      await groupsAPI.addMember(id, selectedUserId);
+      await groupsAPI.addMember(id, userCodeInput.trim().toUpperCase());
       setShowAddMemberModal(false);
-      setSelectedUserId('');
+      setUserCodeInput('');
+      setFoundUser(null);
+      setSearchError('');
       loadData();
     } catch (error) {
-      console.error('Error adding member:', error);
-      alert('Ошибка добавления участника');
+      const msg = error.response?.data?.message || 'Ошибка добавления участника';
+      setSearchError(msg);
     }
   };
 
@@ -93,10 +120,6 @@ const GroupDetail = () => {
   if (!group) {
     return <div className="container">Группа не найдена</div>;
   }
-
-  const availableUsers = users.filter(
-    user => !group.members.some(member => member.userId === user.id)
-  );
 
   // Проверяем, является ли пользователь создателем или админом
   const isCreator = group.creatorId === user?.id || String(group.creatorId) === String(user?.id);
@@ -145,29 +168,73 @@ const GroupDetail = () => {
             <h2>Добавить участника</h2>
             <form onSubmit={handleAddMember}>
               <div className="form-group">
-                <label>Выберите пользователя</label>
-                <select 
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  required
-                  className="form-control"
-                >
-                  <option value="">Выберите пользователя...</option>
-                  {availableUsers.map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.username} ({user.email})
-                    </option>
-                  ))}
-                </select>
+                <label>Уникальный код пользователя</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={userCodeInput}
+                    onChange={(e) => {
+                      setUserCodeInput(e.target.value.toUpperCase());
+                      setFoundUser(null);
+                      setSearchError('');
+                    }}
+                    placeholder="Например: AB3X7"
+                    maxLength={5}
+                    className="form-control"
+                    style={{ fontFamily: 'monospace', letterSpacing: '2px', textTransform: 'uppercase' }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleSearchUser}
+                    disabled={searching}
+                  >
+                    {searching ? '...' : 'Найти'}
+                  </button>
+                </div>
               </div>
+
+              {searchError && (
+                <div style={{ color: '#e53e3e', fontSize: '14px', marginBottom: '12px' }}>
+                  {searchError}
+                </div>
+              )}
+
+              {foundUser && (
+                <div style={{
+                  background: '#f0fff4',
+                  border: '1px solid #68d391',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <span style={{ fontSize: '24px' }}>✅</span>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{foundUser.username}</div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>код: {foundUser.userCode}</div>
+                  </div>
+                </div>
+              )}
+
               <div className="modal-actions">
-                <button type="submit" className="btn btn-primary">Добавить</button>
-                <button 
-                  type="button" 
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={!foundUser}
+                >
+                  Добавить
+                </button>
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => {
                     setShowAddMemberModal(false);
-                    setSelectedUserId('');
+                    setUserCodeInput('');
+                    setFoundUser(null);
+                    setSearchError('');
                   }}
                 >
                   Отмена

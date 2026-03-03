@@ -28,6 +28,11 @@ public class UserRepository : IUserRepository
         return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
     }
 
+    public async Task<User?> GetByUserCodeAsync(string userCode)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.UserCode == userCode);
+    }
+
     public async Task<User> CreateAsync(User user)
     {
         _context.Users.Add(user);

@@ -53,12 +53,13 @@ public class AuthController : ControllerBase
                 Email = request.Email,
                 Username = request.Username,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                UserCode = await GenerateUniqueUserCodeAsync(),
                 CreatedAt = DateTime.UtcNow
             };
 
             await _userRepository.CreateAsync(user);
 
-            Console.WriteLine($"[REGISTER] Пользователь создан: {user.Username}");
+            Console.WriteLine($"[REGISTER] Пользователь создан: {user.Username}, код: {user.UserCode}");
 
             var token = GenerateJwtToken(user);
 
@@ -69,7 +70,8 @@ public class AuthController : ControllerBase
                 {
                     user.Id,
                     user.Email,
-                    user.Username
+                    user.Username,
+                    user.UserCode
                 }
             });
         }
@@ -97,9 +99,17 @@ public class AuthController : ControllerBase
             }
 
             user.LastLoginAt = DateTime.UtcNow;
+
+            // Генерируем код если он пустой (для существующих пользователей)
+            if (string.IsNullOrEmpty(user.UserCode))
+            {
+                user.UserCode = await GenerateUniqueUserCodeAsync();
+                Console.WriteLine($"[LOGIN] Сгенерирован код для существующего пользователя: {user.UserCode}");
+            }
+
             await _userRepository.UpdateAsync(user);
 
-            Console.WriteLine($"[LOGIN] Успешный вход: {user.Username}");
+            Console.WriteLine($"[LOGIN] Успешный вход: {user.Username}, код: {user.UserCode}");
 
             var token = GenerateJwtToken(user);
 
@@ -110,7 +120,8 @@ public class AuthController : ControllerBase
                 {
                     user.Id,
                     user.Email,
-                    user.Username
+                    user.Username,
+                    user.UserCode
                 }
             });
         }
@@ -214,6 +225,20 @@ public class AuthController : ControllerBase
             Console.WriteLine($"[RESET PASSWORD ERROR] {ex.Message}");
             return StatusCode(500, new { message = "Ошибка сервера" });
         }
+    }
+
+    // ========================= USER CODE GENERATION =========================
+    private async Task<string> GenerateUniqueUserCodeAsync()
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var random = new Random();
+        string code;
+        do
+        {
+            code = new string(Enumerable.Repeat(chars, 5)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        } while (await _userRepository.GetByUserCodeAsync(code) != null);
+        return code;
     }
 
     // ========================= JWT TOKEN GENERATION =========================
