@@ -483,6 +483,22 @@ textarea.form-control {
 /* ── Vote progress bar ── */
 [data-theme="dark"] .vote-progress-bar { background: var(--color-border); }
 
+/* ── Group member list ── */
+[data-theme="dark"] .member-name { color: var(--color-text-primary) !important; }
+[data-theme="dark"] .member-item { border-color: var(--color-border) !important; background: var(--color-bg-section); }
+[data-theme="dark"] .member-email,
+[data-theme="dark"] .member-date { color: var(--color-text-muted) !important; }
+[data-theme="dark"] .decision-stats { border-color: var(--color-border) !important; }
+[data-theme="dark"] .decision-card p { color: var(--color-text-secondary) !important; }
+[data-theme="dark"] .decision-header h3 { color: var(--color-text-primary) !important; }
+
+/* ── PDF button dark mode ── */
+[data-theme="dark"] .btn-pdf { background: #374151; color: #e2e8f0; }
+[data-theme="dark"] .btn-pdf:hover { background: #4b5563; }
+
+/* ── Decision deadline timer ── */
+[data-theme="dark"] .decision-deadline-timer { box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
 /* ── VotingMethods page ── */
 [data-theme="dark"] .example-takeaway { background: #152533 !important; border-color: #1e3d5c !important; }
 [data-theme="dark"] .example-takeaway h3 { color: #90cdf4; }

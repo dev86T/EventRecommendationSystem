@@ -35,10 +35,42 @@ const GroupDetail = () => {
   const [editGroupName, setEditGroupName] = useState('');
   const [editGroupDescription, setEditGroupDescription] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
+  const [timers, setTimers] = useState({});
 
   useEffect(() => {
     loadData();
   }, [id]);
+
+  useEffect(() => {
+    const formatTime = (diff) => {
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      if (days > 0) return `${days}д ${hours}ч ${minutes}м`;
+      if (hours > 0) return `${hours}ч ${minutes}м ${seconds}с`;
+      if (minutes > 0) return `${minutes}м ${seconds}с`;
+      return `${seconds}с`;
+    };
+
+    const updateTimers = () => {
+      const now = new Date();
+      const updated = {};
+      decisions.forEach(d => {
+        const realStatus = typeof d.status === 'string' ? d.status :
+          d.status === 0 ? 'Active' : d.status === 1 ? 'Completed' : 'Cancelled';
+        if (realStatus !== 'Active' || !d.deadline) return;
+        const diff = new Date(d.deadline) - now;
+        updated[d.id] = diff > 0 ? formatTime(diff) : null;
+      });
+      setTimers(updated);
+    };
+
+    if (decisions.length === 0) return;
+    updateTimers();
+    const interval = setInterval(updateTimers, 1000);
+    return () => clearInterval(interval);
+  }, [decisions]);
 
   const loadData = async () => {
     try {
@@ -406,6 +438,11 @@ const GroupDetail = () => {
                         <span>🗳️ {decision.votesCount} голосов</span>
                         <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
                       </div>
+                      {realStatus === 'Active' && timers[decision.id] && (
+                        <div className="decision-deadline-timer">
+                          ⏱ {timers[decision.id]}
+                        </div>
+                      )}
                       {group && group.members && (
                         <div className="vote-progress-wrapper">
                           <div className="vote-progress-label">
