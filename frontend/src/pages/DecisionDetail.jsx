@@ -258,12 +258,22 @@ const DecisionDetail = () => {
 
           <div className="decision-meta">
             <span className={`badge ${
-              decision.status === 'Active' ? 'badge-success' : 
+              decision.status === 'Active' ? 'badge-success' :
               decision.status === 'Completed' ? 'badge-primary' : 'badge-danger'
             }`}>
-              {decision.status === 'Active' ? '✅ Активно' : 
+              {decision.status === 'Active' ? '✅ Активно' :
                decision.status === 'Completed' ? '🏁 Завершено' : '❌ Отменено'}
             </span>
+            {decision.isBlindVoting && (
+              <span className="badge" style={{ background: '#4a5568', color: 'white' }} title="Участники не видят чужие голоса во время голосования">
+                🙈 Слепое
+              </span>
+            )}
+            {decision.isAnonymous && (
+              <span className="badge" style={{ background: '#6b46c1', color: 'white' }} title="Имена участников скрыты">
+                🎭 Анонимное
+              </span>
+            )}
             <span>📋 {decision.alternatives?.length || 0} вариантов</span>
             <span>🗳️ {decision.votes?.length || 0} голосов</span>
             <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
@@ -455,25 +465,54 @@ const DecisionDetail = () => {
 
             <div className="info-card">
               <h3>Голоса участников ({decision.votes?.length || 0})</h3>
-              <div className="votes-list">
-                {decision.votes?.map(vote => (
-                  <div key={vote.id} className="vote-item">
-                    <div className="vote-user">
-                      <strong>{vote.username}</strong>
-                      <span>{new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
-                    </div>
-                    <div className="vote-rankings">
-                      {vote.rankings
-                        ?.sort((a, b) => a.rank - b.rank)
-                        .map((ranking, idx) => (
-                          <span key={ranking.alternativeId} className="ranking-badge">
-                            {idx + 1}. {decision.alternatives?.find(a => a.id === ranking.alternativeId)?.name}
-                          </span>
-                        ))}
+
+              {decision.isBlindVoting && !decision.isCompleted && (
+                <div style={{
+                  background: '#edf2f7',
+                  border: '1px solid #cbd5e0',
+                  borderRadius: '8px',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  color: '#4a5568'
+                }}>
+                  <span style={{ fontSize: '24px' }}>🙈</span>
+                  <div>
+                    <strong>Слепое голосование активно</strong>
+                    <div style={{ fontSize: '13px', marginTop: '2px' }}>
+                      Голоса других участников скрыты до завершения голосования
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {(!decision.isBlindVoting || decision.isCompleted) && (
+                <div className="votes-list">
+                  {decision.votes?.length === 0 && (
+                    <p style={{ color: '#666' }}>Пока никто не проголосовал</p>
+                  )}
+                  {decision.votes?.map(vote => (
+                    <div key={vote.id} className="vote-item">
+                      <div className="vote-user">
+                        <strong>
+                          {decision.isAnonymous ? '🎭 Аноним' : vote.username}
+                        </strong>
+                        <span>{new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
+                      </div>
+                      <div className="vote-rankings">
+                        {vote.rankings
+                          ?.sort((a, b) => a.rank - b.rank)
+                          .map((ranking, idx) => (
+                            <span key={ranking.alternativeId} className="ranking-badge">
+                              {idx + 1}. {decision.alternatives?.find(a => a.id === ranking.alternativeId)?.name}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

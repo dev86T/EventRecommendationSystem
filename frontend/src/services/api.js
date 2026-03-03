@@ -55,6 +55,7 @@ export const decisionsAPI = {
   calculateResults: (decisionId, method = 'all') => 
     api.post(`/decisions/${decisionId}/calculate?method=${method}`),
   complete: (decisionId) => api.put(`/decisions/${decisionId}/complete`),
+  deleteDecision: (decisionId) => api.delete(`/decisions/${decisionId}`),
 };
 
 export default api;

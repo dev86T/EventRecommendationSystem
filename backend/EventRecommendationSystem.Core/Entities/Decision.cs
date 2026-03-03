@@ -9,6 +9,8 @@ public class Decision
     public DateTime CreatedAt { get; set; }
     public DateTime? Deadline { get; set; }
     public bool IsCompleted { get; set; } = false;
+    public bool IsBlindVoting { get; set; } = false;
+    public bool IsAnonymous { get; set; } = false;
     public DecisionStatus Status { get; set; } = DecisionStatus.Active;
 
     // Navigation properties
