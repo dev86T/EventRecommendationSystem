@@ -208,4 +208,78 @@ public class EmailService : IEmailService
             return false;
         }
     }
+
+    public async Task<bool> SendEmailConfirmationAsync(string toEmail, string code, string username)
+    {
+        try
+        {
+            Console.WriteLine($"[EMAIL] Отправка кода подтверждения почты на {toEmail}...");
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_emailSettings.SenderName, _emailSettings.SenderEmail));
+            message.To.Add(new MailboxAddress(username, toEmail));
+            message.Subject = "Подтверждение новой почты - Event Recommendation System";
+
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = $@"
+                    <html>
+                    <head>
+                        <style>
+                            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                            .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                            .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                            .code-box {{ background: white; border: 2px solid #667eea; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }}
+                            .code {{ font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 5px; }}
+                            .footer {{ text-align: center; margin-top: 20px; font-size: 12px; color: #999; }}
+                            .warning {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='header'>
+                                <h1>✉️ Подтверждение новой почты</h1>
+                            </div>
+                            <div class='content'>
+                                <p>Здравствуйте, <strong>{username}</strong>!</p>
+                                <p>Вы запросили смену адреса электронной почты в Event Recommendation System.</p>
+                                <div class='code-box'>
+                                    <p style='margin: 0; font-size: 14px; color: #666;'>Ваш код подтверждения:</p>
+                                    <div class='code'>{code}</div>
+                                </div>
+                                <p>Введите этот код на странице профиля. Код действителен в течение <strong>15 минут</strong>.</p>
+                                <div class='warning'>
+                                    <strong>⚠️ Внимание!</strong> Если вы не запрашивали смену почты, просто проигнорируйте это письмо.
+                                </div>
+                                <p>С уважением,<br>Команда Event Recommendation System</p>
+                            </div>
+                            <div class='footer'>
+                                <p>Это автоматическое письмо, пожалуйста, не отвечайте на него.</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                ",
+                TextBody = $"Код подтверждения новой почты: {code}\nКод действителен 15 минут."
+            };
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(_emailSettings.SmtpServer, _emailSettings.SmtpPort,
+                _emailSettings.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
+            await client.AuthenticateAsync(_emailSettings.SenderEmail, _emailSettings.SenderPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            Console.WriteLine($"[EMAIL] Код подтверждения успешно отправлен на {toEmail}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[EMAIL ERROR] Ошибка отправки кода подтверждения: {ex.Message}");
+            return false;
+        }
+    }
 }

@@ -148,6 +148,31 @@
   border-top: 1px solid #f0f0f0;
 }
 
+/* Vote progress bar */
+.vote-progress-wrapper {
+  margin-top: 10px;
+}
+
+.vote-progress-label {
+  font-size: 13px;
+  color: #718096;
+  margin-bottom: 5px;
+}
+
+.vote-progress-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.vote-progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
 .empty-decisions {
   text-align: center;
   padding: 40px 20px;

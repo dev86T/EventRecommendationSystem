@@ -47,7 +47,9 @@ const Navbar = () => {
                 )}
               </div>
             )}
-            <span className="navbar-username">👤 {user?.username}</span>
+            <Link to="/profile" className="navbar-username">
+              {user?.avatarEmoji || '👤'} {user?.username}
+            </Link>
             <button onClick={handleLogout} className="btn btn-secondary btn-sm">
               Выход
             </button>

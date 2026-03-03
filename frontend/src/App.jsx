@@ -10,6 +10,7 @@ import GroupDetail from './pages/GroupDetail';
 import DecisionDetail from './pages/DecisionDetail';
 import CreateDecision from './pages/CreateDecision';
 import VotingMethods from './pages/VotingMethods';
+import Profile from './pages/Profile';
 import Navbar from './components/Navbar';
 
 const PrivateRoute = ({ children }) => {
@@ -85,6 +86,12 @@ function AppRoutes() {
           <PrivateRoute>
             <Navbar />
             <VotingMethods />
+          </PrivateRoute>
+        } />
+        <Route path="/profile" element={
+          <PrivateRoute>
+            <Navbar />
+            <Profile />
           </PrivateRoute>
         } />
         <Route path="/" element={<Navigate to="/dashboard" />} />
