@@ -1,11 +1,16 @@
 /* ============================================
    CSS VARIABLES — LIGHT & DARK THEME
+   3-level dark hierarchy:
+   Level 1 (body):    darkest gradient
+   Level 2 (card):    main panels/cards     --color-bg-card
+   Level 3 (section): inner sections        --color-bg-section
+   Level 4 (item):    individual items      --color-bg-surface
    ============================================ */
 :root {
   --color-bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --color-bg-card: #ffffff;
-  --color-bg-surface: #f8f9fa;
-  --color-bg-surface2: #f7fafc;
+  --color-bg-section: #f7fafc;
+  --color-bg-surface: #f0f4f8;
   --color-text-primary: #333333;
   --color-text-secondary: #666666;
   --color-text-muted: #999999;
@@ -19,19 +24,23 @@
 }
 
 [data-theme="dark"] {
-  --color-bg-body: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  --color-bg-card: #1e2130;
-  --color-bg-surface: #252a3a;
-  --color-bg-surface2: #1a1f2e;
+  /* Level 1: body gradient (darkest) */
+  --color-bg-body: linear-gradient(135deg, #0d0f1c 0%, #131a30 100%);
+  /* Level 2: main cards/panels */
+  --color-bg-card: #1b2038;
+  /* Level 3: inner sections (slightly lighter — visible differentiation) */
+  --color-bg-section: #232b45;
+  /* Level 4: individual items/rows */
+  --color-bg-surface: #2c3558;
   --color-text-primary: #e2e8f0;
   --color-text-secondary: #a0aec0;
   --color-text-muted: #718096;
-  --color-border: #2d3748;
-  --color-border-light: #2d3748;
-  --color-navbar-bg: #1a1d2e;
-  --color-input-bg: #252a3a;
-  --color-shadow: rgba(0, 0, 0, 0.4);
-  --color-shadow-md: rgba(0, 0, 0, 0.5);
+  --color-border: #2d3a55;
+  --color-border-light: #2d3a55;
+  --color-navbar-bg: #161d34;
+  --color-input-bg: #232b45;
+  --color-shadow: rgba(0, 0, 0, 0.45);
+  --color-shadow-md: rgba(0, 0, 0, 0.55);
 }
 
 * {
@@ -336,23 +345,26 @@ textarea.form-control {
    DARK THEME OVERRIDES
    ============================================ */
 
-/* Navbar */
-[data-theme="dark"] .navbar {
-  background: var(--color-navbar-bg);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-}
+/* ── Navbar ── */
+[data-theme="dark"] .navbar { background: var(--color-navbar-bg); box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
 [data-theme="dark"] .navbar-logo { color: #818cf8; }
 [data-theme="dark"] .navbar-link { color: var(--color-text-secondary); }
-[data-theme="dark"] .navbar-link:hover { color: #818cf8; }
-[data-theme="dark"] .navbar-username { color: var(--color-text-primary); }
+[data-theme="dark"] .navbar-link:hover,
 [data-theme="dark"] .navbar-username:hover { color: #818cf8; }
+[data-theme="dark"] .navbar-username { color: var(--color-text-primary); text-decoration: none; }
 
-/* Buttons (keep gradients, adjust secondary) */
-[data-theme="dark"] .btn-secondary { background: #374151; }
-[data-theme="dark"] .btn-secondary:hover { background: #4b5563; }
+/* ── Buttons ── */
+[data-theme="dark"] .btn-secondary { background: #2e3a52; color: #cbd5e0; }
+[data-theme="dark"] .btn-secondary:hover { background: #3a4a67; }
+[data-theme="dark"] .btn-icon-subtle:hover { background: rgba(255,255,255,0.08); }
 
-/* Page-level white cards */
+/* ── Level 2: Main page panels (replaces white) ── */
+[data-theme="dark"] .auth-card,
+[data-theme="dark"] .dashboard-card,
 [data-theme="dark"] .group-header,
+[data-theme="dark"] .members-section,
+[data-theme="dark"] .decisions-section,
+[data-theme="dark"] .empty-state,
 [data-theme="dark"] .decision-header-card,
 [data-theme="dark"] .tab-content,
 [data-theme="dark"] .tabs,
@@ -360,121 +372,128 @@ textarea.form-control {
 [data-theme="dark"] .profile-header-card,
 [data-theme="dark"] .profile-section-card,
 [data-theme="dark"] .modal-content,
-[data-theme="dark"] .result-card,
-[data-theme="dark"] .method-card,
-[data-theme="dark"] .example-scenario,
-[data-theme="dark"] .votes-row,
-[data-theme="dark"] .user-code-badge + *,
-[data-theme="dark"] .decision-card {
+[data-theme="dark"] .method-card {
   background: var(--color-bg-card) !important;
   color: var(--color-text-primary);
+  border-color: var(--color-border);
+  box-shadow: 0 4px 16px var(--color-shadow) !important;
 }
 
-/* Surface-level backgrounds */
+/* ── Level 3: Inner sections (slightly lighter than panels) ── */
 [data-theme="dark"] .vote-item,
 [data-theme="dark"] .alternative-info-item,
 [data-theme="dark"] .alternative-card,
-[data-theme="dark"] .example-section,
+[data-theme="dark"] .ranking-item,
+[data-theme="dark"] .metrics-section,
+[data-theme="dark"] .analysis-content,
+[data-theme="dark"] .comparison-item,
+[data-theme="dark"] .theory-item,
+[data-theme="dark"] .voting-info,
 [data-theme="dark"] .method-body,
-[data-theme="dark"] .example-takeaway {
-  background: var(--color-bg-surface) !important;
+[data-theme="dark"] .example-section {
+  background: var(--color-bg-section) !important;
   border-color: var(--color-border) !important;
-}
-
-/* Text colors */
-[data-theme="dark"] .group-header h1,
-[data-theme="dark"] .decision-header-card h1,
-[data-theme="dark"] .group-header h1,
-[data-theme="dark"] .info-card h3,
-[data-theme="dark"] .decision-title,
-[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4 {
   color: var(--color-text-primary);
 }
-[data-theme="dark"] .group-subtitle,
-[data-theme="dark"] .decision-subtitle,
-[data-theme="dark"] .page-subtitle,
-[data-theme="dark"] .group-meta-info,
-[data-theme="dark"] .decision-meta,
-[data-theme="dark"] .decision-stats,
-[data-theme="dark"] .vote-user span,
-[data-theme="dark"] p {
-  color: var(--color-text-secondary);
+
+/* ── Level 4: Individual items/rows ── */
+[data-theme="dark"] .ranked-item,
+[data-theme="dark"] .rank-btn,
+[data-theme="dark"] .method-btn:not(.active),
+[data-theme="dark"] .votes-row,
+[data-theme="dark"] .ranking-badge,
+[data-theme="dark"] .example-scenario,
+[data-theme="dark"] .result-card {
+  background: var(--color-bg-surface) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-primary);
 }
 
-/* Borders */
+/* ── Text ── */
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+[data-theme="dark"] h4, [data-theme="dark"] h5 { color: var(--color-text-primary); }
+[data-theme="dark"] p { color: var(--color-text-secondary); }
+[data-theme="dark"] .group-subtitle, [data-theme="dark"] .decision-subtitle,
+[data-theme="dark"] .page-subtitle, [data-theme="dark"] .group-meta-info,
+[data-theme="dark"] .decision-meta, [data-theme="dark"] .decision-stats,
+[data-theme="dark"] .vote-user span, [data-theme="dark"] .group-description,
+[data-theme="dark"] .group-meta, [data-theme="dark"] .group-info,
+[data-theme="dark"] .group-date, [data-theme="dark"] .auth-subtitle,
+[data-theme="dark"] .dashboard-card-text, [data-theme="dark"] .methods-list li,
+[data-theme="dark"] .group-card-link p, [data-theme="dark"] .ranking-score,
+[data-theme="dark"] .voting-info li, [data-theme="dark"] .pairwise-info p,
+[data-theme="dark"] .analysis-content p, [data-theme="dark"] .theory-item p,
+[data-theme="dark"] .voting-instructions p, [data-theme="dark"] .alternative-content p,
+[data-theme="dark"] .metrics-help { color: var(--color-text-secondary); }
+[data-theme="dark"] .vote-progress-label, [data-theme="dark"] .group-meta-info,
+[data-theme="dark"] .no-results, [data-theme="dark"] .loading { color: var(--color-text-muted); }
+[data-theme="dark"] .dashboard-card h3, [data-theme="dark"] .group-card-link h3,
+[data-theme="dark"] .empty-state h2, [data-theme="dark"] .ranking-details h4,
+[data-theme="dark"] .method-selector h3, [data-theme="dark"] .rankings-section h3,
+[data-theme="dark"] .methods-comparison h4, [data-theme="dark"] .analysis-section h3,
+[data-theme="dark"] .theory-section h4, [data-theme="dark"] .voting-instructions h3,
+[data-theme="dark"] .alternative-content h4, [data-theme="dark"] .voting-info h4 { color: var(--color-text-primary); }
+
+/* ── Specific component details ── */
 [data-theme="dark"] .tab { color: var(--color-text-secondary); }
-[data-theme="dark"] .tab:hover { background: rgba(255,255,255,0.05); }
+[data-theme="dark"] .tab:hover { background: rgba(255,255,255,0.06); }
 [data-theme="dark"] .info-card h3 { border-color: #818cf8; }
-[data-theme="dark"] .method-card { border-color: var(--color-border); }
-[data-theme="dark"] .method-card-header { color: var(--color-text-primary); }
+[data-theme="dark"] .profile-section-card h2 { border-color: #818cf8; }
 [data-theme="dark"] .method-name { color: var(--color-text-primary); }
-[data-theme="dark"] .method-short,
-[data-theme="dark"] .method-toggle { color: var(--color-text-muted); }
+[data-theme="dark"] .method-short, [data-theme="dark"] .method-toggle { color: var(--color-text-muted); }
 [data-theme="dark"] .method-section p { color: var(--color-text-secondary); }
-[data-theme="dark"] .method-body { border-color: var(--color-border); }
+[data-theme="dark"] .method-body { border-top-color: var(--color-border); }
 [data-theme="dark"] .result-header { color: var(--color-text-secondary); }
 [data-theme="dark"] .result-winner { color: var(--color-text-primary); }
 [data-theme="dark"] .result-explanation { color: var(--color-text-muted); }
-[data-theme="dark"] .ranking-badge {
-  background: var(--color-bg-surface);
-  border-color: var(--color-border);
-  color: var(--color-text-primary);
-}
+[data-theme="dark"] .methods-list li { border-color: var(--color-border); }
+[data-theme="dark"] .group-footer { border-color: var(--color-border); }
+[data-theme="dark"] .analysis-section { border-top-color: var(--color-border); }
+[data-theme="dark"] .ranking-bar { background: var(--color-border); }
 
-/* Forms */
-[data-theme="dark"] textarea.form-control { background: var(--color-input-bg); color: var(--color-text-primary); }
-[data-theme="dark"] .form-group label { color: var(--color-text-primary); }
+/* ── Forms ── */
+[data-theme="dark"] textarea.form-control,
 [data-theme="dark"] select.form-control { background: var(--color-input-bg); color: var(--color-text-primary); }
+[data-theme="dark"] .form-group label { color: var(--color-text-primary); }
 
-/* Modal overlay */
-[data-theme="dark"] .modal { background: rgba(0, 0, 0, 0.65); }
-[data-theme="dark"] .modal-header h2 { color: var(--color-text-primary); }
+/* ── Modals ── */
+[data-theme="dark"] .modal,
+[data-theme="dark"] .modal-overlay { background: rgba(0, 0, 0, 0.7); }
 [data-theme="dark"] .modal-close { color: var(--color-text-muted); }
 [data-theme="dark"] .modal-close:hover { background: rgba(255,255,255,0.08); color: var(--color-text-primary); }
-[data-theme="dark"] .modal-footer { border-color: var(--color-border); }
+[data-theme="dark"] .modal-footer,
+[data-theme="dark"] .modal-content h2 { border-color: var(--color-border); color: var(--color-text-primary); }
 
-/* Alerts (keep readable in dark) */
-[data-theme="dark"] .alert-danger { background: #4a1a1a; color: #feb2b2; border-color: #742a2a; }
-[data-theme="dark"] .alert-success { background: #1a3a2a; color: #9ae6b4; border-color: #276749; }
-[data-theme="dark"] .alert-info { background: #1a2e3a; color: #90cdf4; border-color: #2c5282; }
+/* ── Alerts ── */
+[data-theme="dark"] .alert-danger { background: #3d1515; color: #feb2b2; border-color: #6b2020; }
+[data-theme="dark"] .alert-success { background: #152d1f; color: #9ae6b4; border-color: #1e5236; }
+[data-theme="dark"] .alert-info { background: #152533; color: #90cdf4; border-color: #1e3d5c; }
+[data-theme="dark"] .alert-warning { background: #2d2208; color: #f6e05e; border-color: #6b5010; }
 
-/* Draggable items */
-[data-theme="dark"] .draggable-item {
-  background: var(--color-bg-card);
-  border-color: var(--color-border);
-  color: var(--color-text-primary);
-}
+/* ── Draggable items ── */
+[data-theme="dark"] .draggable-item { background: var(--color-bg-card); border-color: var(--color-border); color: var(--color-text-primary); }
 
-/* Dashboard & group cards */
-[data-theme="dark"] .decision-card { border-color: var(--color-border); }
-
-/* Profile */
+/* ── Profile ── */
 [data-theme="dark"] .profile-code-badge { background: #1e2d4a; border-color: #2d4a7a; }
-[data-theme="dark"] .avatar-btn { background: var(--color-bg-surface); border-color: var(--color-border); }
-[data-theme="dark"] .avatar-btn:hover { background: #2d3748; border-color: #818cf8; }
-[data-theme="dark"] .avatar-btn-selected { border-color: #818cf8; background: rgba(129,140,248,0.15); }
-[data-theme="dark"] .profile-section-card h2 { border-color: #818cf8; }
+[data-theme="dark"] .profile-section-desc { color: var(--color-text-secondary); }
+[data-theme="dark"] .avatar-btn { background: var(--color-bg-section); border-color: var(--color-border); }
+[data-theme="dark"] .avatar-btn:hover { background: var(--color-bg-surface); border-color: #818cf8; }
+[data-theme="dark"] .avatar-btn-selected { border-color: #818cf8; background: rgba(129,140,248,0.18); box-shadow: 0 0 0 3px rgba(129,140,248,0.2); }
 
-/* Vote progress */
+/* ── Vote progress bar ── */
 [data-theme="dark"] .vote-progress-bar { background: var(--color-border); }
 
-/* Example section */
-[data-theme="dark"] .example-section { background: var(--color-bg-surface); border-color: var(--color-border); }
-[data-theme="dark"] .example-section h2 { color: var(--color-text-primary); }
-[data-theme="dark"] .example-takeaway { background: #1a2e3a; border-color: #2c5282; }
+/* ── VotingMethods page ── */
+[data-theme="dark"] .example-takeaway { background: #152533 !important; border-color: #1e3d5c !important; }
 [data-theme="dark"] .example-takeaway h3 { color: #90cdf4; }
 [data-theme="dark"] .example-takeaway p { color: #bee3f8; }
-[data-theme="dark"] .votes-row { background: var(--color-bg-card); border-color: var(--color-border); }
-[data-theme="dark"] .rank-num { background: var(--color-bg-surface); color: var(--color-text-secondary); }
-[data-theme="dark"] .rank-item,
-[data-theme="dark"] .votes-count { color: var(--color-text-secondary); }
+[data-theme="dark"] .rank-num { background: var(--color-bg-section); color: var(--color-text-secondary); }
+[data-theme="dark"] .rank-item, [data-theme="dark"] .votes-count { color: var(--color-text-secondary); }
+[data-theme="dark"] .example-section h2 { color: var(--color-text-primary); }
 
-/* Groups/results grid */
-[data-theme="dark"] .results-grid .result-card { background: var(--color-bg-card); border-color: var(--color-border); }
-
-/* User code badge */
-[data-theme="dark"] .user-code-tooltip { background: #e2e8f0; color: #1a202c; }
-[data-theme="dark"] .user-code-tooltip::before { border-bottom-color: #e2e8f0; }
+/* ── User code tooltip ── */
+[data-theme="dark"] .user-code-tooltip { background: #cbd5e0; color: #1a202c; }
+[data-theme="dark"] .user-code-tooltip::before { border-bottom-color: #cbd5e0; }
 
 /* ============================================
    THEME TOGGLE BUTTON
