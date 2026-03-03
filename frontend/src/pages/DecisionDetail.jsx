@@ -30,7 +30,6 @@ const DecisionDetail = () => {
     loadDecision();
   }, [id]);
 
-  // Проверка, является ли пользователь создателем группы
   useEffect(() => {
     const fetchGroup = async () => {
       try {
@@ -49,18 +48,10 @@ const DecisionDetail = () => {
         console.error('Error fetching group:', err);
       }
     };
-
     fetchGroup();
   }, [decision?.groupId, user?.id]);
 
-  // Таймер обратного отсчёта
   useEffect(() => {
-    console.log('[TIMER] Decision:', {
-      hasDeadline: !!decision?.deadline,
-      deadline: decision?.deadline,
-      isCompleted: decision?.isCompleted
-    });
-
     if (!decision?.deadline || decision?.isCompleted) {
       setTimeLeft(null);
       return;
@@ -71,14 +62,9 @@ const DecisionDetail = () => {
       const now = new Date();
       const diff = deadline - now;
 
-      console.log('[TIMER] Diff:', diff, 'ms');
-
       if (diff <= 0) {
         setTimeLeft('Время истекло');
-        setTimeout(() => {
-          console.log('[TIMER] Reloading page due to expired deadline');
-          window.location.reload();
-        }, 2000);
+        setTimeout(() => window.location.reload(), 2000);
         return;
       }
 
@@ -87,28 +73,20 @@ const DecisionDetail = () => {
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-      if (days > 0) {
-        setTimeLeft(`${days}д ${hours}ч ${minutes}м`);
-      } else if (hours > 0) {
-        setTimeLeft(`${hours}ч ${minutes}м ${seconds}с`);
-      } else if (minutes > 0) {
-        setTimeLeft(`${minutes}м ${seconds}с`);
-      } else {
-        setTimeLeft(`${seconds}с`);
-      }
+      if (days > 0) setTimeLeft(`${days}д ${hours}ч ${minutes}м`);
+      else if (hours > 0) setTimeLeft(`${hours}ч ${minutes}м ${seconds}с`);
+      else if (minutes > 0) setTimeLeft(`${minutes}м ${seconds}с`);
+      else setTimeLeft(`${seconds}с`);
     };
 
     calculateTimeLeft();
     const interval = setInterval(calculateTimeLeft, 1000);
-
     return () => clearInterval(interval);
   }, [decision?.deadline, decision?.isCompleted]);
 
   const loadDecision = async () => {
     try {
-      console.log('[LOAD] Loading decision:', id);
       const response = await decisionsAPI.getById(id);
-      console.log('[LOAD] Decision loaded:', response.data);
       setDecision(response.data);
     } catch (error) {
       console.error('Error loading decision:', error);
@@ -147,14 +125,10 @@ const DecisionDetail = () => {
   };
 
   const handleCompleteVoting = async () => {
-    if (!window.confirm('Вы уверены, что хотите завершить голосование? Это действие необратимо.')) {
-      return;
-    }
-
+    if (!window.confirm('Вы уверены, что хотите завершить голосование? Это действие необратимо.')) return;
     try {
       setCompletingVoting(true);
       setError('');
-      console.log('[COMPLETE] Completing voting for decision:', id);
       await decisionsAPI.complete(id);
       setSuccess('Голосование завершено!');
       setTimeout(() => window.location.reload(), 1500);
@@ -168,29 +142,15 @@ const DecisionDetail = () => {
   };
 
   const handleDeleteDecision = async () => {
-    const confirmText = 'Вы уверены, что хотите удалить это решение? Все голоса будут потеряны. Это действие НЕОБРАТИМО!';
-    if (!window.confirm(confirmText)) {
-      return;
-    }
-
-    // Двойное подтверждение для безопасности
-    if (!window.confirm('Последнее предупреждение! Удалить решение?')) {
-      return;
-    }
-
+    if (!window.confirm('Вы уверены, что хотите удалить это решение? Все голоса будут потеряны. Это действие НЕОБРАТИМО!')) return;
+    if (!window.confirm('Последнее предупреждение! Удалить решение?')) return;
     try {
       setDeletingDecision(true);
       setError('');
-      console.log('[DELETE] Deleting decision:', id);
-      
-      // Используем прямой axios для DELETE запроса
       const api = (await import('../services/api')).default;
       await api.delete(`/decisions/${id}`);
-      
       setSuccess('Решение удалено!');
-      setTimeout(() => {
-        navigate(`/groups/${decision.groupId}`);
-      }, 1500);
+      setTimeout(() => navigate(`/groups/${decision.groupId}`), 1500);
     } catch (err) {
       console.error('Error deleting decision:', err);
       setError(err.response?.data?.message || 'Ошибка при удалении решения');
@@ -279,415 +239,359 @@ const DecisionDetail = () => {
   const hasVoted = !!userVote;
 
   return (
-    <div className="container decision-detail">
-      {error && (
-        <div className="alert alert-danger" style={{ marginBottom: '20px' }}>
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="alert alert-success" style={{ marginBottom: '20px' }}>
-          {success}
-        </div>
-      )}
+    <>
+      <div className="container decision-detail">
+        {error && (
+          <div className="alert alert-danger" style={{ marginBottom: '20px' }}>{error}</div>
+        )}
+        {success && (
+          <div className="alert alert-success" style={{ marginBottom: '20px' }}>{success}</div>
+        )}
 
-      <div className="decision-header-card">
-        <div>
-          <h1>{decision.title}</h1>
-          <p className="decision-subtitle">{decision.description}</p>
-          
-          {/* Информация о дедлайне и таймер */}
-          {decision.deadline && (
-            <div style={{ marginTop: '15px', marginBottom: '10px' }}>
-              <p style={{ margin: '5px 0', color: '#555' }}>
-                <strong>📅 Дедлайн:</strong> {new Date(decision.deadline).toLocaleString('ru-RU')}
-              </p>
-              {!decision.isCompleted && timeLeft && (
-                <div style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  display: 'inline-block',
-                  marginTop: '10px',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  boxShadow: '0 4px 12px rgba(118, 75, 162, 0.3)'
-                }}>
-                  ⏱️ Осталось: {timeLeft}
-                </div>
-              )}
-            </div>
-          )}
+        <div className="decision-header-card">
+          <div>
+            <h1>{decision.title}</h1>
+            <p className="decision-subtitle">{decision.description}</p>
 
-          <div className="decision-meta">
-            <span className={`badge ${
-              decision.status === 'Active' ? 'badge-success' :
-              decision.status === 'Completed' ? 'badge-primary' : 'badge-danger'
-            }`}>
-              {decision.status === 'Active' ? '✅ Активно' :
-               decision.status === 'Completed' ? '🏁 Завершено' : '❌ Отменено'}
-            </span>
-            {decision.isBlindVoting && (
-              <span className="badge" style={{ background: '#4a5568', color: 'white' }} title="Участники не видят чужие голоса во время голосования">
-                🙈 Слепое
-              </span>
-            )}
-            {decision.isAnonymous && (
-              <span className="badge" style={{ background: '#6b46c1', color: 'white' }} title="Имена участников скрыты">
-                🎭 Анонимное
-              </span>
-            )}
-            <span>📋 {decision.alternatives?.length || 0} вариантов</span>
-            <span>🗳️ {decision.votes?.length || 0} голосов</span>
-            <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
-          </div>
-
-          {/* Кнопки для создателя / админа */}
-          {canManage && (
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-              {!decision.isCompleted && (
-                <button
-                  className="btn btn-danger"
-                  onClick={handleCompleteVoting}
-                  disabled={completingVoting}
-                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
-                >
-                  {completingVoting ? 'Завершение...' : '🏁 Завершить голосование'}
-                </button>
-              )}
-
-              <button
-                className="btn btn-secondary"
-                onClick={handleOpenEdit}
-                style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
-              >
-                ✏️ Редактировать
-              </button>
-
-              <button
-                className="btn btn-primary"
-                onClick={handleRepeat}
-                style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
-              >
-                🔄 Повторить
-              </button>
-
-              <button
-                className="btn"
-                onClick={handleDeleteDecision}
-                disabled={deletingDecision}
-                style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', background: '#dc3545', color: 'white', border: 'none' }}
-              >
-                {deletingDecision ? 'Удаление...' : '🗑️ Удалить'}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="tabs">
-        <button 
-          className={`tab ${activeTab === 'vote' ? 'active' : ''}`}
-          onClick={() => setActiveTab('vote')}
-        >
-          Голосование
-        </button>
-        <button 
-          className={`tab ${activeTab === 'results' ? 'active' : ''}`}
-          onClick={() => setActiveTab('results')}
-        >
-          Результаты
-        </button>
-        <button 
-          className={`tab ${activeTab === 'info' ? 'active' : ''}`}
-          onClick={() => setActiveTab('info')}
-        >
-          Информация
-        </button>
-      </div>
-
-      <div className="tab-content" key={activeTab}>
-        {activeTab === 'vote' && (
-          <div className="voting-tab" style={{ position: 'relative' }}>
-            {decision.isCompleted && (
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(255, 255, 255, 0.75)',
-                backdropFilter: 'blur(3px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 10,
-                borderRadius: '12px',
-                minHeight: '400px'
-              }}>
-                <div style={{
-                  background: 'white',
-                  padding: '40px 60px',
-                  borderRadius: '16px',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                  textAlign: 'center',
-                  maxWidth: '500px'
-                }}>
-                  <div style={{ 
-                    fontSize: '64px', 
-                    marginBottom: '20px'
+            {decision.deadline && (
+              <div style={{ marginTop: '15px', marginBottom: '10px' }}>
+                <p style={{ margin: '5px 0', color: '#555' }}>
+                  <strong>📅 Дедлайн:</strong> {new Date(decision.deadline).toLocaleString('ru-RU')}
+                </p>
+                {!decision.isCompleted && timeLeft && (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    display: 'inline-block',
+                    marginTop: '10px',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 12px rgba(118, 75, 162, 0.3)'
                   }}>
-                    🏁
-                  </div>
-                  <h2 style={{ 
-                    color: '#764ba2', 
-                    marginBottom: '15px',
-                    fontSize: '28px'
-                  }}>
-                    Голосование завершено
-                  </h2>
-                  <p style={{ 
-                    color: '#666', 
-                    fontSize: '16px',
-                    marginBottom: '20px'
-                  }}>
-                    Спасибо всем за участие!
-                  </p>
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => setActiveTab('results')}
-                    style={{ padding: '12px 32px', fontSize: '16px' }}
-                  >
-                    📊 Посмотреть результаты
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            {decision.status !== 'Active' ? (
-              <div className="alert alert-info">
-                Голосование завершено. Перейдите на вкладку "Результаты" для просмотра итогов.
-              </div>
-            ) : (
-              <>
-                {hasVoted && (
-                  <div className="alert alert-success">
-                    ✓ Вы уже проголосовали. Вы можете изменить свой выбор, переупорядочив варианты.
+                    ⏱️ Осталось: {timeLeft}
                   </div>
                 )}
-                <VotingInterface
-                  alternatives={decision.alternatives}
-                  userVote={userVote}
-                  onSubmit={handleVoteSubmit}
-                />
-              </>
+              </div>
+            )}
+
+            <div className="decision-meta">
+              <span className={`badge ${
+                decision.status === 'Active' ? 'badge-success' :
+                decision.status === 'Completed' ? 'badge-primary' : 'badge-danger'
+              }`}>
+                {decision.status === 'Active' ? '✅ Активно' :
+                 decision.status === 'Completed' ? '🏁 Завершено' : '❌ Отменено'}
+              </span>
+              {decision.isBlindVoting && (
+                <span className="badge" style={{ background: '#4a5568', color: 'white' }} title="Участники не видят чужие голоса во время голосования">
+                  🙈 Слепое
+                </span>
+              )}
+              {decision.isAnonymous && (
+                <span className="badge" style={{ background: '#6b46c1', color: 'white' }} title="Имена участников скрыты">
+                  🎭 Анонимное
+                </span>
+              )}
+              <span>📋 {decision.alternatives?.length || 0} вариантов</span>
+              <span>🗳️ {decision.votes?.length || 0} голосов</span>
+              <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
+            </div>
+
+            {canManage && (
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {!decision.isCompleted && (
+                  <button
+                    className="btn btn-danger"
+                    onClick={handleCompleteVoting}
+                    disabled={completingVoting}
+                    style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
+                  >
+                    {completingVoting ? 'Завершение...' : '🏁 Завершить голосование'}
+                  </button>
+                )}
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleOpenEdit}
+                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
+                >
+                  ✏️ Редактировать
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleRepeat}
+                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
+                >
+                  🔄 Повторить
+                </button>
+                <button
+                  className="btn"
+                  onClick={handleDeleteDecision}
+                  disabled={deletingDecision}
+                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', background: '#dc3545', color: 'white', border: 'none' }}
+                >
+                  {deletingDecision ? 'Удаление...' : '🗑️ Удалить'}
+                </button>
+              </div>
             )}
           </div>
-        )}
+        </div>
 
-        {activeTab === 'results' && (
-          <div className="results-tab">
-            <div className="results-actions">
-              <button 
-                className="btn btn-primary"
-                onClick={() => calculateResults('all')}
-                disabled={calculatingResults || (decision.votes?.length || 0) === 0}
-              >
-                {calculatingResults ? 'Расчет...' : 'Рассчитать результаты'}
-              </button>
-              {(decision.votes?.length || 0) === 0 && (
-                <p className="help-text">Необходимо минимум 1 голос для расчета результатов</p>
-              )}
-            </div>
+        <div className="tabs">
+          <button className={`tab ${activeTab === 'vote' ? 'active' : ''}`} onClick={() => setActiveTab('vote')}>
+            Голосование
+          </button>
+          <button className={`tab ${activeTab === 'results' ? 'active' : ''}`} onClick={() => setActiveTab('results')}>
+            Результаты
+          </button>
+          <button className={`tab ${activeTab === 'info' ? 'active' : ''}`} onClick={() => setActiveTab('info')}>
+            Информация
+          </button>
+        </div>
 
-            {results && <ResultsDisplay results={results} alternatives={decision.alternatives} />}
-          </div>
-        )}
-
-        {activeTab === 'info' && (
-          <div className="info-tab">
-            <div className="info-card">
-              <h3>Варианты для выбора</h3>
-              <div className="alternatives-list">
-                {decision.alternatives?.map((alt, index) => (
-                  <div key={alt.id} className="alternative-info-item">
-                    <div className="alternative-number">{index + 1}</div>
-                    <div>
-                      <h4>{alt.name}</h4>
-                      {alt.description && <p>{alt.description}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="info-card">
-              <h3>Голоса участников ({decision.votes?.length || 0})</h3>
-
-              {decision.isBlindVoting && !decision.isCompleted && (
+        <div className="tab-content" key={activeTab}>
+          {activeTab === 'vote' && (
+            <div className="voting-tab" style={{ position: 'relative' }}>
+              {decision.isCompleted && (
                 <div style={{
-                  background: '#edf2f7',
-                  border: '1px solid #cbd5e0',
-                  borderRadius: '8px',
-                  padding: '14px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  color: '#4a5568'
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  background: 'rgba(255, 255, 255, 0.75)',
+                  backdropFilter: 'blur(3px)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 10, borderRadius: '12px', minHeight: '400px'
                 }}>
-                  <span style={{ fontSize: '24px' }}>🙈</span>
-                  <div>
-                    <strong>Слепое голосование активно</strong>
-                    <div style={{ fontSize: '13px', marginTop: '2px' }}>
-                      Голоса других участников скрыты до завершения голосования
-                    </div>
+                  <div style={{
+                    background: 'white', padding: '40px 60px', borderRadius: '16px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.12)', textAlign: 'center', maxWidth: '500px'
+                  }}>
+                    <div style={{ fontSize: '64px', marginBottom: '20px' }}>🏁</div>
+                    <h2 style={{ color: '#764ba2', marginBottom: '15px', fontSize: '28px' }}>Голосование завершено</h2>
+                    <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px' }}>Спасибо всем за участие!</p>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => setActiveTab('results')}
+                      style={{ padding: '12px 32px', fontSize: '16px' }}
+                    >
+                      📊 Посмотреть результаты
+                    </button>
                   </div>
                 </div>
               )}
 
-              {(!decision.isBlindVoting || decision.isCompleted) && (
-                <div className="votes-list">
-                  {decision.votes?.length === 0 && (
-                    <p style={{ color: '#666' }}>Пока никто не проголосовал</p>
+              {decision.status !== 'Active' ? (
+                <div className="alert alert-info">
+                  Голосование завершено. Перейдите на вкладку "Результаты" для просмотра итогов.
+                </div>
+              ) : (
+                <>
+                  {hasVoted && (
+                    <div className="alert alert-success">
+                      ✓ Вы уже проголосовали. Вы можете изменить свой выбор, переупорядочив варианты.
+                    </div>
                   )}
-                  {decision.votes?.map(vote => (
-                    <div key={vote.id} className="vote-item">
-                      <div className="vote-user">
-                        <strong>
-                          {decision.isAnonymous ? '🎭 Аноним' : vote.username}
-                        </strong>
-                        <span>{new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
-                      </div>
-                      <div className="vote-rankings">
-                        {vote.rankings
-                          ?.sort((a, b) => a.rank - b.rank)
-                          .map((ranking, idx) => (
-                            <span key={ranking.alternativeId} className="ranking-badge">
-                              {idx + 1}. {decision.alternatives?.find(a => a.id === ranking.alternativeId)?.name}
-                            </span>
-                          ))}
+                  <VotingInterface
+                    alternatives={decision.alternatives}
+                    userVote={userVote}
+                    onSubmit={handleVoteSubmit}
+                  />
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'results' && (
+            <div className="results-tab">
+              <div className="results-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => calculateResults('all')}
+                  disabled={calculatingResults || (decision.votes?.length || 0) === 0}
+                >
+                  {calculatingResults ? 'Расчет...' : 'Рассчитать результаты'}
+                </button>
+                {(decision.votes?.length || 0) === 0 && (
+                  <p className="help-text">Необходимо минимум 1 голос для расчета результатов</p>
+                )}
+              </div>
+              {results && <ResultsDisplay results={results} alternatives={decision.alternatives} />}
+            </div>
+          )}
+
+          {activeTab === 'info' && (
+            <div className="info-tab">
+              <div className="info-card">
+                <h3>Варианты для выбора</h3>
+                <div className="alternatives-list">
+                  {decision.alternatives?.map((alt, index) => (
+                    <div key={alt.id} className="alternative-info-item">
+                      <div className="alternative-number">{index + 1}</div>
+                      <div>
+                        <h4>{alt.name}</h4>
+                        {alt.description && <p>{alt.description}</p>}
                       </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+              </div>
 
-    {/* Edit Modal */}
-    {showEditModal && (
-      <div className="modal" onClick={(e) => e.target.classList.contains('modal') && setShowEditModal(false)}>
-        <div className="modal-content">
-          <div className="modal-header">
-            <h2>✏️ Редактировать решение</h2>
-            <button className="modal-close" onClick={() => setShowEditModal(false)}>✕</button>
-          </div>
-
-          <div className="form-group">
-            <label>Название *</label>
-            <input
-              type="text"
-              className="form-control"
-              value={editData.title}
-              onChange={(e) => setEditData(d => ({ ...d, title: e.target.value }))}
-              placeholder="Название решения"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Описание</label>
-            <textarea
-              className="form-control"
-              value={editData.description}
-              onChange={(e) => setEditData(d => ({ ...d, description: e.target.value }))}
-              placeholder="Описание"
-              rows="3"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>⚙️ Режим голосования</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={editData.isBlindVoting}
-                  onChange={(e) => setEditData(d => ({ ...d, isBlindVoting: e.target.checked }))}
-                  style={{ width: '16px', height: '16px' }}
-                />
-                <span><strong>🙈 Слепое голосование</strong> — участники не видят чужие голоса</span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={editData.isAnonymous}
-                  onChange={(e) => setEditData(d => ({ ...d, isAnonymous: e.target.checked }))}
-                  style={{ width: '16px', height: '16px' }}
-                />
-                <span><strong>🎭 Анонимное голосование</strong> — имена участников скрыты</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Варианты для выбора</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
-              {editData.alternatives.map((alt, idx) => (
-                <div key={idx} style={{ background: '#f8f9fa', borderRadius: '10px', padding: '14px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#667eea', marginBottom: '8px' }}>
-                    {alt.isNew ? '🆕 Новый вариант' : `Вариант ${idx + 1}`}
+              <div className="info-card">
+                <h3>Голоса участников ({decision.votes?.length || 0})</h3>
+                {decision.isBlindVoting && !decision.isCompleted && (
+                  <div style={{
+                    background: '#edf2f7', border: '1px solid #cbd5e0', borderRadius: '8px',
+                    padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '10px', color: '#4a5568'
+                  }}>
+                    <span style={{ fontSize: '24px' }}>🙈</span>
+                    <div>
+                      <strong>Слепое голосование активно</strong>
+                      <div style={{ fontSize: '13px', marginTop: '2px' }}>
+                        Голоса других участников скрыты до завершения голосования
+                      </div>
+                    </div>
                   </div>
+                )}
+                {(!decision.isBlindVoting || decision.isCompleted) && (
+                  <div className="votes-list">
+                    {decision.votes?.length === 0 && (
+                      <p style={{ color: '#666' }}>Пока никто не проголосовал</p>
+                    )}
+                    {decision.votes?.map(vote => (
+                      <div key={vote.id} className="vote-item">
+                        <div className="vote-user">
+                          <strong>{decision.isAnonymous ? '🎭 Аноним' : vote.username}</strong>
+                          <span>{new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
+                        </div>
+                        <div className="vote-rankings">
+                          {vote.rankings
+                            ?.sort((a, b) => a.rank - b.rank)
+                            .map((ranking, idx) => (
+                              <span key={ranking.alternativeId} className="ranking-badge">
+                                {idx + 1}. {decision.alternatives?.find(a => a.id === ranking.alternativeId)?.name}
+                              </span>
+                            ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="modal" onClick={(e) => e.target.classList.contains('modal') && setShowEditModal(false)}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>✏️ Редактировать решение</h2>
+              <button className="modal-close" onClick={() => setShowEditModal(false)}>✕</button>
+            </div>
+
+            <div className="form-group">
+              <label>Название *</label>
+              <input
+                type="text"
+                className="form-control"
+                value={editData.title}
+                onChange={(e) => setEditData(d => ({ ...d, title: e.target.value }))}
+                placeholder="Название решения"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Описание</label>
+              <textarea
+                className="form-control"
+                value={editData.description}
+                onChange={(e) => setEditData(d => ({ ...d, description: e.target.value }))}
+                placeholder="Описание"
+                rows="3"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>⚙️ Режим голосования</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                   <input
-                    type="text"
-                    className="form-control"
-                    value={alt.name}
-                    onChange={(e) => {
-                      const alts = [...editData.alternatives];
-                      alts[idx] = { ...alts[idx], name: e.target.value };
-                      setEditData(d => ({ ...d, alternatives: alts }));
-                    }}
-                    placeholder="Название варианта"
-                    style={{ marginBottom: '8px' }}
+                    type="checkbox"
+                    checked={editData.isBlindVoting}
+                    onChange={(e) => setEditData(d => ({ ...d, isBlindVoting: e.target.checked }))}
+                    style={{ width: '16px', height: '16px' }}
                   />
-                  <textarea
-                    className="form-control"
-                    value={alt.description}
-                    onChange={(e) => {
-                      const alts = [...editData.alternatives];
-                      alts[idx] = { ...alts[idx], description: e.target.value };
-                      setEditData(d => ({ ...d, alternatives: alts }));
-                    }}
-                    placeholder="Описание (опционально)"
-                    rows="2"
+                  <span><strong>🙈 Слепое голосование</strong> — участники не видят чужие голоса</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editData.isAnonymous}
+                    onChange={(e) => setEditData(d => ({ ...d, isAnonymous: e.target.checked }))}
+                    style={{ width: '16px', height: '16px' }}
                   />
-                </div>
-              ))}
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setEditData(d => ({ ...d, alternatives: [...d.alternatives, { name: '', description: '', isNew: true }] }))}
-                style={{ width: '100%' }}
-              >
-                + Добавить вариант
+                  <span><strong>🎭 Анонимное голосование</strong> — имена участников скрыты</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Варианты для выбора</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                {editData.alternatives.map((alt, idx) => (
+                  <div key={idx} style={{ background: '#f8f9fa', borderRadius: '10px', padding: '14px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#667eea', marginBottom: '8px' }}>
+                      {alt.isNew ? '🆕 Новый вариант' : `Вариант ${idx + 1}`}
+                    </div>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={alt.name}
+                      onChange={(e) => {
+                        const alts = [...editData.alternatives];
+                        alts[idx] = { ...alts[idx], name: e.target.value };
+                        setEditData(d => ({ ...d, alternatives: alts }));
+                      }}
+                      placeholder="Название варианта"
+                      style={{ marginBottom: '8px' }}
+                    />
+                    <textarea
+                      className="form-control"
+                      value={alt.description}
+                      onChange={(e) => {
+                        const alts = [...editData.alternatives];
+                        alts[idx] = { ...alts[idx], description: e.target.value };
+                        setEditData(d => ({ ...d, alternatives: alts }));
+                      }}
+                      placeholder="Описание (опционально)"
+                      rows="2"
+                    />
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setEditData(d => ({ ...d, alternatives: [...d.alternatives, { name: '', description: '', isNew: true }] }))}
+                  style={{ width: '100%' }}
+                >
+                  + Добавить вариант
+                </button>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={handleSaveEdit} disabled={editSaving || !editData.title.trim()}>
+                {editSaving ? 'Сохранение...' : '💾 Сохранить'}
+              </button>
+              <button className="btn btn-secondary" onClick={() => setShowEditModal(false)} disabled={editSaving}>
+                Отмена
               </button>
             </div>
           </div>
-
-          <div className="modal-footer">
-            <button className="btn btn-primary" onClick={handleSaveEdit} disabled={editSaving || !editData.title.trim()}>
-              {editSaving ? 'Сохранение...' : '💾 Сохранить'}
-            </button>
-            <button className="btn btn-secondary" onClick={() => setShowEditModal(false)} disabled={editSaving}>
-              Отмена
-            </button>
-          </div>
         </div>
-      </div>
-    )}
+      )}
+    </>
   );
 };
 
