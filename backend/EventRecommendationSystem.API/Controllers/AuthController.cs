@@ -23,6 +23,25 @@ public class AuthController : ControllerBase
         _emailService = emailService;
     }
 
+    // Генерация уникального кода (ABC12345)
+    private string GenerateUserCode()
+    {
+        const string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const string digits = "0123456789";
+        var random = new Random();
+        var code = new StringBuilder();
+        
+        // 3 буквы
+        for (int i = 0; i < 3; i++)
+            code.Append(letters[random.Next(letters.Length)]);
+        
+        // 5 цифр
+        for (int i = 0; i < 5; i++)
+            code.Append(digits[random.Next(digits.Length)]);
+        
+        return code.ToString();
+    }
+
     // ========================= REGISTER =========================
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -46,6 +65,13 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Пользователь с таким именем уже существует" });
             }
 
+            // Генерация уникального кода
+            string userCode;
+            do
+            {
+                userCode = GenerateUserCode();
+            } while ((await _userRepository.GetAllAsync()).Any(u => u.UserCode == userCode));
+
             // Создание пользователя
             var user = new User
             {
@@ -53,12 +79,13 @@ public class AuthController : ControllerBase
                 Email = request.Email,
                 Username = request.Username,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserCode = userCode
             };
 
             await _userRepository.CreateAsync(user);
 
-            Console.WriteLine($"[REGISTER] Пользователь создан: {user.Username}");
+            Console.WriteLine($"[REGISTER] Пользователь создан: {user.Username}, код: {user.UserCode}");
 
             var token = GenerateJwtToken(user);
 
@@ -69,7 +96,8 @@ public class AuthController : ControllerBase
                 {
                     user.Id,
                     user.Email,
-                    user.Username
+                    user.Username,
+                    user.UserCode
                 }
             });
         }

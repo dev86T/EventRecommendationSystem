@@ -175,30 +175,49 @@ public class GroupsController : ControllerBase
     [HttpDelete("{groupId}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(Guid groupId, Guid userId)
     {
-        var currentUserId = GetUserId();
-        var group = await _groupRepository.GetByIdAsync(groupId);
-
-        if (group == null)
+        try
         {
-            return NotFound(new { message = "Группа не найдена" });
-        }
+            Console.WriteLine($"[REMOVE MEMBER] GroupId: {groupId}, UserId: {userId}");
+            
+            var currentUserId = GetUserId();
+            var group = await _groupRepository.GetByIdAsync(groupId);
 
-        // Проверка прав
-        var userMembership = group.Members.FirstOrDefault(m => m.UserId == currentUserId);
-        if (userMembership == null || (!userMembership.IsAdmin && group.CreatorId != currentUserId && currentUserId != userId))
+            if (group == null)
+            {
+                Console.WriteLine("[REMOVE MEMBER] Group not found");
+                return NotFound(new { message = "Группа не найдена" });
+            }
+
+            // Проверка прав: создатель ИЛИ админ
+            var isCreator = group.CreatorId == currentUserId;
+            var currentMember = group.Members.FirstOrDefault(m => m.UserId == currentUserId);
+            var isAdmin = currentMember?.IsAdmin ?? false;
+            
+            Console.WriteLine($"[REMOVE MEMBER] isCreator: {isCreator}, isAdmin: {isAdmin}");
+
+            // Админ ИЛИ создатель могут удалять
+            if (!isCreator && !isAdmin)
+            {
+                Console.WriteLine("[REMOVE MEMBER] Forbidden - not admin or creator");
+                return StatusCode(403, new { message = "У вас нет прав на удаление участников" });
+            }
+
+            // Создатель не может быть удален
+            if (group.CreatorId == userId)
+            {
+                return BadRequest(new { message = "Создатель группы не может быть удален" });
+            }
+
+            await _groupRepository.RemoveMemberAsync(groupId, userId);
+            
+            Console.WriteLine("[REMOVE MEMBER] Success!");
+            return Ok(new { message = "Участник успешно удален" });
+        }
+        catch (Exception ex)
         {
-            return Forbid();
+            Console.WriteLine($"[REMOVE MEMBER ERROR] {ex.Message}");
+            return StatusCode(500, new { message = "Ошибка при удалении участника" });
         }
-
-        // Создатель не может быть удален
-        if (group.CreatorId == userId)
-        {
-            return BadRequest(new { message = "Создатель группы не может быть удален" });
-        }
-
-        await _groupRepository.RemoveMemberAsync(groupId, userId);
-
-        return Ok(new { message = "Участник успешно удален" });
     }
 }
 
