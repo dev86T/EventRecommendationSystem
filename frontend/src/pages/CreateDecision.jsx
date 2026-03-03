@@ -1,21 +1,25 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { decisionsAPI } from '../services/api';
 import './CreateDecision.css';
 
 const CreateDecision = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const location = useLocation();
+  const prefill = location.state?.prefill;
+
+  const [title, setTitle] = useState(prefill?.title || '');
+  const [description, setDescription] = useState(prefill?.description || '');
   const [minutes, setMinutes] = useState(5);
   const [seconds, setSeconds] = useState(0);
-  const [alternatives, setAlternatives] = useState([
-    { name: '', description: '' },
-    { name: '', description: '' }
-  ]);
-  const [isBlindVoting, setIsBlindVoting] = useState(false);
-  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [alternatives, setAlternatives] = useState(
+    prefill?.alternatives?.length >= 2
+      ? prefill.alternatives
+      : [{ name: '', description: '' }, { name: '', description: '' }]
+  );
+  const [isBlindVoting, setIsBlindVoting] = useState(prefill?.isBlindVoting || false);
+  const [isAnonymous, setIsAnonymous] = useState(prefill?.isAnonymous || false);
 
   const addAlternative = () => {
     setAlternatives([...alternatives, { name: '', description: '' }]);
@@ -75,7 +79,12 @@ const CreateDecision = () => {
   return (
     <div className="container create-decision">
       <div className="page-card">
-        <h1>Создать новое решение</h1>
+        <h1>{prefill ? '🔄 Повторить решение' : 'Создать новое решение'}</h1>
+        {prefill && (
+          <p style={{ color: '#718096', marginBottom: '24px', marginTop: '-16px' }}>
+            Данные скопированы из предыдущего решения — измените нужное и запустите заново.
+          </p>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">

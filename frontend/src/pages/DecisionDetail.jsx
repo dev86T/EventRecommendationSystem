@@ -17,8 +17,12 @@ const DecisionDetail = () => {
   const [calculatingResults, setCalculatingResults] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
   const [isCreator, setIsCreator] = useState(false);
+  const [canManage, setCanManage] = useState(false);
   const [completingVoting, setCompletingVoting] = useState(false);
   const [deletingDecision, setDeletingDecision] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editData, setEditData] = useState({ title: '', description: '', isBlindVoting: false, isAnonymous: false, alternatives: [] });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -33,12 +37,13 @@ const DecisionDetail = () => {
         if (decision?.groupId) {
           const response = await groupsAPI.getById(decision.groupId);
           const currentUserId = user?.id;
-          setIsCreator(response.data.creatorId === currentUserId);
-          console.log('[CREATOR CHECK]', {
-            currentUserId,
-            creatorId: response.data.creatorId,
-            isCreator: response.data.creatorId === currentUserId
-          });
+          const creatorCheck = response.data.creatorId === currentUserId ||
+            String(response.data.creatorId) === String(currentUserId);
+          const currentMember = response.data.members?.find(m =>
+            m.userId === currentUserId || String(m.userId) === String(currentUserId));
+          const adminCheck = currentMember?.isAdmin || false;
+          setIsCreator(creatorCheck);
+          setCanManage(creatorCheck || adminCheck);
         }
       } catch (err) {
         console.error('Error fetching group:', err);
@@ -195,6 +200,65 @@ const DecisionDetail = () => {
     }
   };
 
+  const handleOpenEdit = () => {
+    setEditData({
+      title: decision.title,
+      description: decision.description,
+      isBlindVoting: decision.isBlindVoting,
+      isAnonymous: decision.isAnonymous,
+      alternatives: (decision.alternatives || []).map(a => ({
+        id: a.id,
+        name: a.name,
+        description: a.description || '',
+        isNew: false
+      }))
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editData.title.trim()) return;
+    setEditSaving(true);
+    try {
+      await decisionsAPI.updateDecision(id, {
+        title: editData.title,
+        description: editData.description,
+        isBlindVoting: editData.isBlindVoting,
+        isAnonymous: editData.isAnonymous
+      });
+      for (const alt of editData.alternatives) {
+        if (alt.isNew) {
+          if (alt.name.trim()) await decisionsAPI.addAlternative(id, { name: alt.name, description: alt.description });
+        } else {
+          await decisionsAPI.updateAlternative(id, alt.id, { name: alt.name, description: alt.description });
+        }
+      }
+      setShowEditModal(false);
+      await loadDecision();
+      setSuccess('Решение успешно обновлено!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Ошибка обновления');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleRepeat = () => {
+    navigate(`/groups/${decision.groupId}/decisions/new`, {
+      state: {
+        prefill: {
+          title: decision.title,
+          description: decision.description,
+          isBlindVoting: decision.isBlindVoting,
+          isAnonymous: decision.isAnonymous,
+          alternatives: (decision.alternatives || []).map(a => ({ name: a.name, description: a.description || '' }))
+        }
+      }
+    });
+  };
+
   if (loading) {
     return (
       <div className="container">
@@ -279,49 +343,44 @@ const DecisionDetail = () => {
             <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
           </div>
 
-          {/* Кнопки для создателя */}
-          {isCreator && (
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Кнопки для создателя / админа */}
+          {canManage && (
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
               {!decision.isCompleted && (
-                <button 
-                  className="btn btn-danger" 
+                <button
+                  className="btn btn-danger"
                   onClick={handleCompleteVoting}
                   disabled={completingVoting}
-                  style={{
-                    padding: '12px 24px',
-                    fontSize: '16px',
-                    fontWeight: 'bold'
-                  }}
+                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
                 >
                   {completingVoting ? 'Завершение...' : '🏁 Завершить голосование'}
                 </button>
               )}
-              
-              <button 
+
+              <button
+                className="btn btn-secondary"
+                onClick={handleOpenEdit}
+                style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
+              >
+                ✏️ Редактировать
+              </button>
+
+              <button
+                className="btn btn-primary"
+                onClick={handleRepeat}
+                style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
+              >
+                🔄 Повторить
+              </button>
+
+              <button
                 className="btn"
                 onClick={handleDeleteDecision}
                 disabled={deletingDecision}
-                style={{
-                  padding: '12px 24px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  background: '#dc3545',
-                  color: 'white',
-                  border: 'none'
-                }}
+                style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', background: '#dc3545', color: 'white', border: 'none' }}
               >
-                {deletingDecision ? 'Удаление...' : '🗑️ Удалить решение'}
+                {deletingDecision ? 'Удаление...' : '🗑️ Удалить'}
               </button>
-              
-              <p style={{ 
-                fontSize: '13px', 
-                color: '#666', 
-                marginTop: '8px',
-                fontStyle: 'italic',
-                flexBasis: '100%'
-              }}>
-                Только вы как создатель группы можете завершить или удалить голосование
-              </p>
             </div>
           )}
         </div>
@@ -348,7 +407,7 @@ const DecisionDetail = () => {
         </button>
       </div>
 
-      <div className="tab-content">
+      <div className="tab-content" key={activeTab}>
         {activeTab === 'vote' && (
           <div className="voting-tab" style={{ position: 'relative' }}>
             {decision.isCompleted && (
@@ -518,6 +577,117 @@ const DecisionDetail = () => {
         )}
       </div>
     </div>
+
+    {/* Edit Modal */}
+    {showEditModal && (
+      <div className="modal" onClick={(e) => e.target.classList.contains('modal') && setShowEditModal(false)}>
+        <div className="modal-content">
+          <div className="modal-header">
+            <h2>✏️ Редактировать решение</h2>
+            <button className="modal-close" onClick={() => setShowEditModal(false)}>✕</button>
+          </div>
+
+          <div className="form-group">
+            <label>Название *</label>
+            <input
+              type="text"
+              className="form-control"
+              value={editData.title}
+              onChange={(e) => setEditData(d => ({ ...d, title: e.target.value }))}
+              placeholder="Название решения"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Описание</label>
+            <textarea
+              className="form-control"
+              value={editData.description}
+              onChange={(e) => setEditData(d => ({ ...d, description: e.target.value }))}
+              placeholder="Описание"
+              rows="3"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>⚙️ Режим голосования</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={editData.isBlindVoting}
+                  onChange={(e) => setEditData(d => ({ ...d, isBlindVoting: e.target.checked }))}
+                  style={{ width: '16px', height: '16px' }}
+                />
+                <span><strong>🙈 Слепое голосование</strong> — участники не видят чужие голоса</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={editData.isAnonymous}
+                  onChange={(e) => setEditData(d => ({ ...d, isAnonymous: e.target.checked }))}
+                  style={{ width: '16px', height: '16px' }}
+                />
+                <span><strong>🎭 Анонимное голосование</strong> — имена участников скрыты</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Варианты для выбора</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+              {editData.alternatives.map((alt, idx) => (
+                <div key={idx} style={{ background: '#f8f9fa', borderRadius: '10px', padding: '14px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#667eea', marginBottom: '8px' }}>
+                    {alt.isNew ? '🆕 Новый вариант' : `Вариант ${idx + 1}`}
+                  </div>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={alt.name}
+                    onChange={(e) => {
+                      const alts = [...editData.alternatives];
+                      alts[idx] = { ...alts[idx], name: e.target.value };
+                      setEditData(d => ({ ...d, alternatives: alts }));
+                    }}
+                    placeholder="Название варианта"
+                    style={{ marginBottom: '8px' }}
+                  />
+                  <textarea
+                    className="form-control"
+                    value={alt.description}
+                    onChange={(e) => {
+                      const alts = [...editData.alternatives];
+                      alts[idx] = { ...alts[idx], description: e.target.value };
+                      setEditData(d => ({ ...d, alternatives: alts }));
+                    }}
+                    placeholder="Описание (опционально)"
+                    rows="2"
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setEditData(d => ({ ...d, alternatives: [...d.alternatives, { name: '', description: '', isNew: true }] }))}
+                style={{ width: '100%' }}
+              >
+                + Добавить вариант
+              </button>
+            </div>
+          </div>
+
+          <div className="modal-footer">
+            <button className="btn btn-primary" onClick={handleSaveEdit} disabled={editSaving || !editData.title.trim()}>
+              {editSaving ? 'Сохранение...' : '💾 Сохранить'}
+            </button>
+            <button className="btn btn-secondary" onClick={() => setShowEditModal(false)} disabled={editSaving}>
+              Отмена
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 };
 
