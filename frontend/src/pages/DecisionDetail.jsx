@@ -205,6 +205,10 @@ const DecisionDetail = () => {
     }
   };
 
+  const handleExportPDF = () => {
+    window.print();
+  };
+
   const handleRepeat = () => {
     navigate(`/groups/${decision.groupId}/decisions/new`, {
       state: {
@@ -299,42 +303,51 @@ const DecisionDetail = () => {
               <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
             </div>
 
-            {canManage && (
-              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                {!decision.isCompleted && (
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {canManage && !decision.isCompleted && (
+                <button
+                  className="btn btn-danger"
+                  onClick={handleCompleteVoting}
+                  disabled={completingVoting}
+                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
+                >
+                  {completingVoting ? 'Завершение...' : '🏁 Завершить голосование'}
+                </button>
+              )}
+              {canManage && (
+                <>
                   <button
-                    className="btn btn-danger"
-                    onClick={handleCompleteVoting}
-                    disabled={completingVoting}
+                    className="btn btn-secondary"
+                    onClick={handleOpenEdit}
                     style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
                   >
-                    {completingVoting ? 'Завершение...' : '🏁 Завершить голосование'}
+                    ✏️ Редактировать
                   </button>
-                )}
-                <button
-                  className="btn btn-secondary"
-                  onClick={handleOpenEdit}
-                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
-                >
-                  ✏️ Редактировать
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleRepeat}
-                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
-                >
-                  🔄 Повторить
-                </button>
-                <button
-                  className="btn"
-                  onClick={handleDeleteDecision}
-                  disabled={deletingDecision}
-                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', background: '#dc3545', color: 'white', border: 'none' }}
-                >
-                  {deletingDecision ? 'Удаление...' : '🗑️ Удалить'}
-                </button>
-              </div>
-            )}
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleRepeat}
+                    style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
+                  >
+                    🔄 Повторить
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={handleDeleteDecision}
+                    disabled={deletingDecision}
+                    style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', background: '#dc3545', color: 'white', border: 'none' }}
+                  >
+                    {deletingDecision ? 'Удаление...' : '🗑️ Удалить'}
+                  </button>
+                </>
+              )}
+              <button
+                className="btn btn-pdf"
+                onClick={handleExportPDF}
+                title="Сохранить как PDF"
+              >
+                📄 Сохранить PDF
+              </button>
+            </div>
           </div>
         </div>
 
@@ -478,6 +491,76 @@ const DecisionDetail = () => {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Print-only report — hidden in browser, shown when printing */}
+      <div className="print-only">
+        <div className="print-header">
+          <h1>{decision.title}</h1>
+          {decision.description && <p className="print-description">{decision.description}</p>}
+          <div className="print-meta">
+            <span>Статус: {decision.status === 'Active' ? 'Активно' : decision.status === 'Completed' ? 'Завершено' : 'Отменено'}</span>
+            {decision.deadline && <span>Дедлайн: {new Date(decision.deadline).toLocaleString('ru-RU')}</span>}
+            {decision.isBlindVoting && <span>🙈 Слепое голосование</span>}
+            {decision.isAnonymous && <span>🎭 Анонимное</span>}
+            <span>Голосов: {decision.votes?.length || 0}</span>
+            <span>Создано: {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
+          </div>
+        </div>
+
+        <div className="print-section">
+          <h2>Варианты для выбора ({decision.alternatives?.length || 0})</h2>
+          {decision.alternatives?.map((alt, i) => (
+            <div key={alt.id} className="print-alternative">
+              <span className="print-alt-num">{i + 1}</span>
+              <div>
+                <strong>{alt.name}</strong>
+                {alt.description && <p>{alt.description}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {(!decision.isBlindVoting || decision.isCompleted) && decision.votes?.length > 0 && (
+          <div className="print-section">
+            <h2>Голоса участников ({decision.votes.length})</h2>
+            {decision.votes.map(vote => (
+              <div key={vote.id} className="print-vote">
+                <strong>{decision.isAnonymous ? '🎭 Аноним' : vote.username}</strong>
+                <span>{new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
+                <div className="print-rankings">
+                  {vote.rankings
+                    ?.sort((a, b) => a.rank - b.rank)
+                    .map((r, idx) => (
+                      <span key={r.alternativeId} className="print-rank-badge">
+                        {idx + 1}. {decision.alternatives?.find(a => a.id === r.alternativeId)?.name}
+                      </span>
+                    ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {results && (
+          <div className="print-section">
+            <h2>Результаты голосования</h2>
+            {results.winner && (
+              <div className="print-winner">
+                🏆 Победитель: <strong>{decision.alternatives?.find(a => a.id === results.winner)?.name || results.winner}</strong>
+              </div>
+            )}
+            {results.methods && results.methods.map(m => (
+              <div key={m.method} className="print-method-result">
+                <strong>{m.methodName || m.method}</strong>: {decision.alternatives?.find(a => a.id === m.winnerId)?.name}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="print-footer">
+          Экспортировано: {new Date().toLocaleString('ru-RU')}
         </div>
       </div>
 
