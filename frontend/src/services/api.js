@@ -60,4 +60,13 @@ export const decisionsAPI = {
   deleteDecision: (decisionId) => api.delete(`/decisions/${decisionId}`),
 };
 
+// Profile
+export const profileAPI = {
+  getMe: () => api.get('/users/me'),
+  updateProfile: (data) => api.put('/users/me', data),
+  changePassword: (data) => api.put('/users/me/password', data),
+  requestEmailChange: (data) => api.post('/users/me/email/request', data),
+  confirmEmailChange: (data) => api.post('/users/me/email/confirm', data),
+};
+
 export default api;

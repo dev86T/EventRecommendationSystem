@@ -53,6 +53,12 @@
 .navbar-username {
   font-weight: 600;
   color: #333;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.navbar-username:hover {
+  color: #667eea;
 }
 
 .btn-sm {

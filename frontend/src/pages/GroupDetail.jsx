@@ -330,6 +330,23 @@ const GroupDetail = () => {
                         <span>🗳️ {decision.votesCount} голосов</span>
                         <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
                       </div>
+                      {group && group.members && (
+                        <div className="vote-progress-wrapper">
+                          <div className="vote-progress-label">
+                            {decision.votesCount}/{group.members.length} проголосовали
+                          </div>
+                          <div className="vote-progress-bar">
+                            <div
+                              className="vote-progress-fill"
+                              style={{
+                                width: `${group.members.length > 0
+                                  ? Math.min(100, (decision.votesCount / group.members.length) * 100)
+                                  : 0}%`
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </Link>
                     
                     {canDelete && (

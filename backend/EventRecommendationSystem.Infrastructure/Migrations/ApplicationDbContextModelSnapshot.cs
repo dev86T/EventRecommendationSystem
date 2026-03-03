@@ -195,6 +195,11 @@ namespace EventRecommendationSystem.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AvatarEmoji")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasDefaultValue("🐱");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
