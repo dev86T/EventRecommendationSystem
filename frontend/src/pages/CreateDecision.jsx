@@ -10,8 +10,6 @@ const CreateDecision = () => {
   const [description, setDescription] = useState('');
   const [minutes, setMinutes] = useState(5);
   const [seconds, setSeconds] = useState(0);
-  const [isBlindVoting, setIsBlindVoting] = useState(false);
-  const [isAnonymous, setIsAnonymous] = useState(false);
   const [alternatives, setAlternatives] = useState([
     { name: '', description: '' },
     { name: '', description: '' }
@@ -52,9 +50,7 @@ const CreateDecision = () => {
         groupId,
         title,
         description,
-        deadline: deadline.toISOString(),
-        isBlindVoting,
-        isAnonymous
+        deadline: deadline.toISOString()
       });
 
       const decisionId = decisionRes.data.id;
@@ -190,38 +186,6 @@ const CreateDecision = () => {
 
             <p className="help-text" style={{ marginTop: '10px', color: '#666' }}>
               💡 Введите любое время, например: <strong>3 минуты 17 секунд</strong>
-            </p>
-          </div>
-
-          {/* Слепое голосование */}
-          <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginBottom: '10px' }}>
-              <input
-                type="checkbox"
-                checked={isBlindVoting}
-                onChange={(e) => setIsBlindVoting(e.target.checked)}
-                style={{ marginRight: '12px', width: '20px', height: '20px', cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '16px' }}>👁️ <strong>Слепое голосование</strong></span>
-            </label>
-            <p style={{ marginLeft: '32px', fontSize: '14px', color: '#718096', marginTop: '5px' }}>
-              Результаты будут скрыты до завершения голосования. Это помогает избежать влияния промежуточных результатов на выбор участников.
-            </p>
-          </div>
-
-          {/* Анонимное голосование */}
-          <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginBottom: '10px' }}>
-              <input
-                type="checkbox"
-                checked={isAnonymous}
-                onChange={(e) => setIsAnonymous(e.target.checked)}
-                style={{ marginRight: '12px', width: '20px', height: '20px', cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '16px' }}>🕵️ <strong>Анонимное голосование</strong></span>
-            </label>
-            <p style={{ marginLeft: '32px', fontSize: '14px', color: '#718096', marginTop: '5px' }}>
-              Имена участников будут скрыты в результатах. Только показано, сколько человек проголосовало.
             </p>
           </div>
 
