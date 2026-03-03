@@ -30,6 +30,7 @@ const GroupDetail = () => {
   const [searchError, setSearchError] = useState('');
   const [searching, setSearching] = useState(false);
   const [deletingDecision, setDeletingDecision] = useState(null);
+  const [removingMember, setRemovingMember] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -88,6 +89,19 @@ const GroupDetail = () => {
     } catch (error) {
       const msg = error.response?.data?.message || 'Ошибка добавления участника';
       setSearchError(msg);
+    }
+  };
+
+  const handleRemoveMember = async (memberId, memberUsername) => {
+    if (!window.confirm(`Удалить участника "${memberUsername}" из группы?`)) return;
+    try {
+      setRemovingMember(memberId);
+      await groupsAPI.removeMember(id, memberId);
+      loadData();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Ошибка удаления участника');
+    } finally {
+      setRemovingMember(null);
     }
   };
 
@@ -248,17 +262,33 @@ const GroupDetail = () => {
         <div className="members-section">
           <h2>Участники</h2>
           <div className="members-list">
-            {group.members.map(member => (
-              <div key={member.userId} className="member-item">
-                <div className="member-avatar" style={{ fontSize: '32px' }}>
-                  {getAnimalAvatar(member.user.email)}
+            {group.members.map(member => {
+              const isThisCreator = String(member.userId) === String(group.creatorId);
+              const canRemove = canDelete && !isThisCreator;
+              return (
+                <div key={member.userId} className="member-item">
+                  <div className="member-avatar" style={{ fontSize: '32px' }}>
+                    {getAnimalAvatar(member.user.email)}
+                  </div>
+                  <div className="member-info">
+                    <div className="member-name">{member.user.username}</div>
+                  </div>
+                  {isThisCreator && <span className="badge badge-warning">Создатель</span>}
+                  {!isThisCreator && member.isAdmin && <span className="badge badge-primary">Админ</span>}
+                  {canRemove && (
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleRemoveMember(member.userId, member.user.username)}
+                      disabled={removingMember === member.userId}
+                      title="Удалить из группы"
+                      style={{ marginLeft: 'auto' }}
+                    >
+                      {removingMember === member.userId ? '⏳' : '✕'}
+                    </button>
+                  )}
                 </div>
-                <div className="member-info">
-                  <div className="member-name">{member.user.username}</div>
-                </div>
-                {member.isAdmin && <span className="badge badge-primary">Админ</span>}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
