@@ -97,6 +97,29 @@ public class GroupsController : ControllerBase
         });
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateGroup(Guid id, [FromBody] UpdateGroupRequest request)
+    {
+        var userId = GetUserId();
+        var group = await _groupRepository.GetByIdAsync(id);
+
+        if (group == null)
+            return NotFound(new { message = "Группа не найдена" });
+
+        if (group.CreatorId != userId)
+            return Forbid();
+
+        if (!string.IsNullOrWhiteSpace(request.Name))
+            group.Name = request.Name.Trim();
+
+        if (request.Description != null)
+            group.Description = request.Description.Trim();
+
+        await _groupRepository.UpdateAsync(group);
+
+        return Ok(new { group.Id, group.Name, group.Description });
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request)
     {
@@ -215,6 +238,12 @@ public class CreateGroupRequest
 {
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+}
+
+public class UpdateGroupRequest
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
 }
 
 public class AddMemberRequest

@@ -31,6 +31,10 @@ const GroupDetail = () => {
   const [searching, setSearching] = useState(false);
   const [deletingDecision, setDeletingDecision] = useState(null);
   const [removingMember, setRemovingMember] = useState(null);
+  const [showEditGroupModal, setShowEditGroupModal] = useState(false);
+  const [editGroupName, setEditGroupName] = useState('');
+  const [editGroupDescription, setEditGroupDescription] = useState('');
+  const [savingGroup, setSavingGroup] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -126,6 +130,26 @@ const GroupDetail = () => {
     }
   };
 
+  const handleOpenEditGroup = () => {
+    setEditGroupName(group.name);
+    setEditGroupDescription(group.description || '');
+    setShowEditGroupModal(true);
+  };
+
+  const handleSaveGroup = async (e) => {
+    e.preventDefault();
+    setSavingGroup(true);
+    try {
+      await groupsAPI.update(id, { name: editGroupName, description: editGroupDescription });
+      setShowEditGroupModal(false);
+      loadData();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Ошибка сохранения');
+    } finally {
+      setSavingGroup(false);
+    }
+  };
+
   if (loading) {
     return <div className="loading">Загрузка...</div>;
   }
@@ -157,7 +181,18 @@ const GroupDetail = () => {
     <div className="container group-detail">
       <div className="group-header">
         <div>
-          <h1>{group.name}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h1 style={{ margin: 0 }}>{group.name}</h1>
+            {isCreator && (
+              <button
+                className="btn-icon-subtle"
+                onClick={handleOpenEditGroup}
+                title="Редактировать группу"
+              >
+                ✏️
+              </button>
+            )}
+          </div>
           <p className="group-subtitle">{group.description}</p>
           <div className="group-meta-info">
             <span>Создатель: {group.creator.username}</span>
@@ -250,6 +285,47 @@ const GroupDetail = () => {
                     setSearchError('');
                   }}
                 >
+                  Отмена
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditGroupModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Редактировать группу</h2>
+              <button className="modal-close" onClick={() => setShowEditGroupModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleSaveGroup}>
+              <div className="form-group">
+                <label>Название группы *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={editGroupName}
+                  onChange={(e) => setEditGroupName(e.target.value)}
+                  required
+                  maxLength={200}
+                />
+              </div>
+              <div className="form-group">
+                <label>Описание</label>
+                <textarea
+                  className="form-control"
+                  value={editGroupDescription}
+                  onChange={(e) => setEditGroupDescription(e.target.value)}
+                  rows="3"
+                />
+              </div>
+              <div className="modal-footer">
+                <button type="submit" className="btn btn-primary" disabled={savingGroup}>
+                  {savingGroup ? 'Сохраняем...' : 'Сохранить'}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowEditGroupModal(false)}>
                   Отмена
                 </button>
               </div>

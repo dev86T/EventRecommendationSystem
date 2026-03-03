@@ -43,6 +43,7 @@ export const groupsAPI = {
   create: (data) => api.post('/groups', data),
   addMember: (groupId, userCode) => api.post(`/groups/${groupId}/members`, { userCode }),
   removeMember: (groupId, userId) => api.delete(`/groups/${groupId}/members/${userId}`),
+  update: (groupId, data) => api.put(`/groups/${groupId}`, data),
 };
 
 // Decisions
