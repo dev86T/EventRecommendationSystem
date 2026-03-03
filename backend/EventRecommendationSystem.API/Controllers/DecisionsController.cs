@@ -75,7 +75,9 @@ public class DecisionsController : ControllerBase
             d.CreatedAt,
             d.Deadline,
             d.IsCompleted,
-            Status = d.Status.ToString(), // ВАЖНО: возвращаем строку!
+            d.IsBlindVoting,
+            d.IsAnonymous,
+            Status = d.Status.ToString(),
             AlternativesCount = d.Alternatives.Count,
             VotesCount = d.Votes.Count
         }));
@@ -112,6 +114,25 @@ public class DecisionsController : ControllerBase
 
             var userVote = decision.Votes.FirstOrDefault(v => v.UserId == userId);
 
+            // Слепое голосование: скрываем чужие голоса пока идёт голосование
+            // Анонимное голосование: скрываем имена пользователей в голосах
+            var isActiveBlind = decision.IsBlindVoting && !decision.IsCompleted;
+
+            var visibleVotes = decision.Votes
+                .Where(v => !isActiveBlind || v.UserId == userId)
+                .Select(v => new
+                {
+                    v.Id,
+                    v.UserId,
+                    Username = decision.IsAnonymous ? "Аноним" : v.User.Username,
+                    v.CreatedAt,
+                    Rankings = v.Rankings.Select(r => new
+                    {
+                        r.AlternativeId,
+                        r.Rank
+                    })
+                });
+
             return Ok(new
             {
                 decision.Id,
@@ -121,7 +142,9 @@ public class DecisionsController : ControllerBase
                 decision.CreatedAt,
                 decision.Deadline,
                 decision.IsCompleted,
-                Status = decision.Status.ToString(), // ВАЖНО: возвращаем строку, а не число!
+                decision.IsBlindVoting,
+                decision.IsAnonymous,
+                Status = decision.Status.ToString(),
                 Alternatives = decision.Alternatives.Select(a => new
                 {
                     a.Id,
@@ -130,18 +153,7 @@ public class DecisionsController : ControllerBase
                     a.ImageUrl,
                     a.MetaData
                 }),
-                Votes = decision.Votes.Select(v => new
-                {
-                    v.Id,
-                    v.UserId,
-                    v.User.Username,
-                    v.CreatedAt,
-                    Rankings = v.Rankings.Select(r => new
-                    {
-                        r.AlternativeId,
-                        r.Rank
-                    })
-                }),
+                Votes = visibleVotes,
                 UserVote = userVote != null ? new
                 {
                     userVote.Id,
@@ -194,6 +206,8 @@ public class DecisionsController : ControllerBase
                 CreatedAt = DateTime.UtcNow,
                 Deadline = request.Deadline,
                 IsCompleted = false,
+                IsBlindVoting = request.IsBlindVoting,
+                IsAnonymous = request.IsAnonymous,
                 Status = DecisionStatus.Active
             };
 
@@ -514,6 +528,8 @@ public class CreateDecisionRequest
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public DateTime? Deadline { get; set; }
+    public bool IsBlindVoting { get; set; } = false;
+    public bool IsAnonymous { get; set; } = false;
 }
 
 public class AddAlternativeRequest
