@@ -138,7 +138,8 @@ public class AuthController : ControllerBase
                 {
                     user.Id,
                     user.Email,
-                    user.Username
+                    user.Username,
+                    user.UserCode
                 }
             });
         }

@@ -89,7 +89,8 @@ public class GroupsController : ControllerBase
                 {
                     m.User.Id,
                     m.User.Username,
-                    m.User.Email
+                    m.User.Email,
+                    m.User.UserCode
                 }
             })
         });
