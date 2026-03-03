@@ -12,10 +12,12 @@ namespace EventRecommendationSystem.API.Controllers;
 public class GroupsController : ControllerBase
 {
     private readonly IGroupRepository _groupRepository;
+    private readonly IUserRepository _userRepository;
 
-    public GroupsController(IGroupRepository groupRepository)
+    public GroupsController(IGroupRepository groupRepository, IUserRepository userRepository)
     {
         _groupRepository = groupRepository;
+        _userRepository = userRepository;
     }
 
     private Guid GetUserId()
@@ -151,8 +153,15 @@ public class GroupsController : ControllerBase
             return Forbid();
         }
 
+        // Найти пользователя по уникальному коду
+        var targetUser = await _userRepository.GetByUserCodeAsync(request.UserCode.ToUpper());
+        if (targetUser == null)
+        {
+            return NotFound(new { message = "Пользователь с таким кодом не найден" });
+        }
+
         // Проверка, что пользователь еще не в группе
-        var isMember = await _groupRepository.IsUserMemberAsync(id, request.UserId);
+        var isMember = await _groupRepository.IsUserMemberAsync(id, targetUser.Id);
         if (isMember)
         {
             return BadRequest(new { message = "Пользователь уже является членом группы" });
@@ -162,7 +171,7 @@ public class GroupsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             GroupId = id,
-            UserId = request.UserId,
+            UserId = targetUser.Id,
             JoinedAt = DateTime.UtcNow,
             IsAdmin = false
         };
@@ -210,5 +219,5 @@ public class CreateGroupRequest
 
 public class AddMemberRequest
 {
-    public Guid UserId { get; set; }
+    public string UserCode { get; set; } = string.Empty;
 }
