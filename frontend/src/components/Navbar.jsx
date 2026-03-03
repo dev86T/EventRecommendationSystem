@@ -28,6 +28,7 @@ const Navbar = () => {
         <div className="navbar-menu">
           <Link to="/dashboard" className="navbar-link">Главная</Link>
           <Link to="/groups" className="navbar-link">Мои группы</Link>
+          <Link to="/voting-methods" className="navbar-link">Объяснение методов</Link>
           <div className="navbar-user">
             {user?.userCode && (
               <div
