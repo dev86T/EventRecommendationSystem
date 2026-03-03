@@ -10,6 +10,7 @@ public interface IDecisionRepository
     Task DeleteAsync(Decision decision);
     Task<IEnumerable<Decision>> GetGroupDecisionsAsync(Guid groupId);
     Task<Alternative> AddAlternativeAsync(Alternative alternative);
+    Task UpdateAlternativeAsync(Alternative alternative);
     Task<Vote> AddVoteAsync(Vote vote);
     Task<Vote?> GetUserVoteAsync(Guid decisionId, Guid userId);
     Task UpdateVoteAsync(Vote vote);

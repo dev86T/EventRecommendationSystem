@@ -391,6 +391,55 @@ public class DecisionsController : ControllerBase
         }
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateDecision(Guid id, [FromBody] UpdateDecisionRequest request)
+    {
+        var userId = GetUserId();
+        var decision = await _decisionRepository.GetByIdAsync(id);
+        if (decision == null) return NotFound(new { message = "Решение не найдено" });
+
+        var group = await _groupRepository.GetByIdAsync(decision.GroupId);
+        if (group == null) return NotFound(new { message = "Группа не найдена" });
+
+        var isCreator = group.CreatorId == userId;
+        var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+        var isAdmin = member?.IsAdmin ?? false;
+        if (!isCreator && !isAdmin) return Forbid();
+
+        decision.Title = request.Title;
+        decision.Description = request.Description;
+        decision.IsBlindVoting = request.IsBlindVoting;
+        decision.IsAnonymous = request.IsAnonymous;
+
+        await _decisionRepository.UpdateAsync(decision);
+        return Ok(new { message = "Решение обновлено" });
+    }
+
+    [HttpPut("{id}/alternatives/{altId}")]
+    public async Task<IActionResult> UpdateAlternative(Guid id, Guid altId, [FromBody] AddAlternativeRequest request)
+    {
+        var userId = GetUserId();
+        var decision = await _decisionRepository.GetByIdAsync(id);
+        if (decision == null) return NotFound(new { message = "Решение не найдено" });
+
+        var group = await _groupRepository.GetByIdAsync(decision.GroupId);
+        if (group == null) return NotFound(new { message = "Группа не найдена" });
+
+        var isCreator = group.CreatorId == userId;
+        var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+        var isAdmin = member?.IsAdmin ?? false;
+        if (!isCreator && !isAdmin) return Forbid();
+
+        var alternative = decision.Alternatives.FirstOrDefault(a => a.Id == altId);
+        if (alternative == null) return NotFound(new { message = "Вариант не найден" });
+
+        alternative.Name = request.Name;
+        alternative.Description = request.Description;
+
+        await _decisionRepository.UpdateAlternativeAsync(alternative);
+        return Ok(new { message = "Вариант обновлён" });
+    }
+
     [HttpPut("{id}/complete")]
     public async Task<IActionResult> CompleteDecision(Guid id)
     {
@@ -528,6 +577,14 @@ public class CreateDecisionRequest
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public DateTime? Deadline { get; set; }
+    public bool IsBlindVoting { get; set; } = false;
+    public bool IsAnonymous { get; set; } = false;
+}
+
+public class UpdateDecisionRequest
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public bool IsBlindVoting { get; set; } = false;
     public bool IsAnonymous { get; set; } = false;
 }

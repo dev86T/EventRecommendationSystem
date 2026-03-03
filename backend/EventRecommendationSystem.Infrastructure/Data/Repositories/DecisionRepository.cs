@@ -63,6 +63,12 @@ public class DecisionRepository : IDecisionRepository
         return alternative;
     }
 
+    public async Task UpdateAlternativeAsync(Alternative alternative)
+    {
+        _context.Alternatives.Update(alternative);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<Vote> AddVoteAsync(Vote vote)
     {
         _context.Votes.Add(vote);

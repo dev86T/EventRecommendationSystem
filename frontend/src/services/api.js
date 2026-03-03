@@ -54,6 +54,8 @@ export const decisionsAPI = {
   submitVote: (decisionId, rankings) => api.post(`/decisions/${decisionId}/vote`, { rankings }),
   calculateResults: (decisionId, method = 'all') => 
     api.post(`/decisions/${decisionId}/calculate?method=${method}`),
+  updateDecision: (id, data) => api.put(`/decisions/${id}`, data),
+  updateAlternative: (decisionId, altId, data) => api.put(`/decisions/${decisionId}/alternatives/${altId}`, data),
   complete: (decisionId) => api.put(`/decisions/${decisionId}/complete`),
   deleteDecision: (decisionId) => api.delete(`/decisions/${decisionId}`),
 };
