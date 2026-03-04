@@ -212,6 +212,17 @@ const DecisionDetail = () => {
     setExportingPdf(true);
     try {
       const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      // Load results if not yet calculated
+      let currentResults = results;
+      const canShowResults = decision.isCompleted || (!decision.isBlindVoting && (decision.votes?.length || 0) > 0);
+      if (!currentResults && canShowResults) {
+        try {
+          const res = await decisionsAPI.calculateResults(id, 'all');
+          currentResults = res.data;
+          setResults(res.data);
+        } catch (e) { /* skip if fails */ }
+      }
       const altRows = (decision.alternatives || []).map((alt, i) => `
         <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f0f4f8;align-items:flex-start;">
           <span style="min-width:26px;height:26px;background:#667eea;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0;">${i+1}</span>
@@ -242,6 +253,21 @@ const DecisionDetail = () => {
         `Создано: ${new Date(decision.createdAt).toLocaleDateString('ru-RU')}`,
       ].filter(Boolean).join(' &nbsp;•&nbsp; ');
 
+      const resultsHtml = currentResults ? (() => {
+        const winnerName = currentResults.winner
+          ? esc((decision.alternatives||[]).find(a => a.id === currentResults.winner)?.name || currentResults.winner)
+          : null;
+        const methodRows = (currentResults.methods || []).map(m => {
+          const name = esc((decision.alternatives||[]).find(a => a.id === m.winnerId)?.name || '');
+          return name ? `<div style="padding:6px 0;border-bottom:1px solid #f0f4f8;font-size:13px;"><strong style="color:#4a5568;">${esc(m.methodName || m.method)}:</strong> ${name}</div>` : '';
+        }).join('');
+        return `<div style="margin-bottom:28px;">
+          <h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">Результаты голосования</h2>
+          ${winnerName ? `<div style="padding:10px 14px;background:#f0fff4;border:1px solid #68d391;border-radius:8px;margin-bottom:12px;font-size:15px;">🏆 Победитель: <strong>${winnerName}</strong></div>` : ''}
+          ${methodRows}
+        </div>`;
+      })() : '';
+
       const html = `<div style="font-family:'Segoe UI',Arial,sans-serif;color:#333;padding:0;font-size:14px;">
         <div style="border-bottom:3px solid #667eea;padding-bottom:16px;margin-bottom:24px;">
           <h1 style="font-size:26px;margin:0 0 10px 0;color:#1a202c;">${esc(decision.title)}</h1>
@@ -253,6 +279,7 @@ const DecisionDetail = () => {
           ${altRows}
         </div>
         ${showVotes ? `<div style="margin-bottom:28px;"><h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">Голоса участников (${decision.votes.length})</h2>${voteRows}</div>` : ''}
+        ${resultsHtml}
         <div style="margin-top:32px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:11px;color:#a0aec0;text-align:right;">Экспортировано: ${new Date().toLocaleString('ru-RU')}</div>
       </div>`;
 

@@ -91,7 +91,8 @@ public class GroupsController : ControllerBase
                 {
                     m.User.Id,
                     m.User.Username,
-                    m.User.Email
+                    m.User.Email,
+                    m.User.AvatarEmoji
                 }
             })
         });
@@ -202,6 +203,23 @@ public class GroupsController : ControllerBase
         await _groupRepository.AddMemberAsync(member);
 
         return Ok(new { message = "Участник успешно добавлен" });
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteGroup(Guid id)
+    {
+        var userId = GetUserId();
+        var group = await _groupRepository.GetByIdAsync(id);
+
+        if (group == null)
+            return NotFound(new { message = "Группа не найдена" });
+
+        if (group.CreatorId != userId)
+            return Forbid();
+
+        await _groupRepository.DeleteAsync(id);
+
+        return Ok(new { message = "Группа удалена" });
     }
 
     [HttpDelete("{groupId}/members/{userId}")]

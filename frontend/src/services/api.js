@@ -44,6 +44,7 @@ export const groupsAPI = {
   addMember: (groupId, userCode) => api.post(`/groups/${groupId}/members`, { userCode }),
   removeMember: (groupId, userId) => api.delete(`/groups/${groupId}/members/${userId}`),
   update: (groupId, data) => api.put(`/groups/${groupId}`, data),
+  deleteGroup: (id) => api.delete(`/groups/${id}`),
 };
 
 // Decisions

@@ -43,10 +43,11 @@
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(3px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  overflow-y: auto;
   animation: modalBgFadeIn 0.2s ease;
 }
 
@@ -56,12 +57,13 @@
 }
 
 .modal-content {
+  margin: auto;
   background: white;
   border-radius: 16px;
   padding: 32px;
   width: 100%;
   max-width: 520px;
-  max-height: 85vh;
+  max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   animation: modalSlideUp 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
