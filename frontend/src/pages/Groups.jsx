@@ -65,9 +65,6 @@ const Groups = () => {
             <Link to={`/groups/${group.id}`} key={group.id} className="card group-card">
               <div className="group-card-header">
                 <h3>{group.name}</h3>
-                <span className={`badge ${group.isActive ? 'badge-success' : 'badge-warning'}`}>
-                  {group.isActive ? 'Активна' : 'Неактивна'}
-                </span>
               </div>
               <p className="group-description">{group.description}</p>
               <div className="group-footer">

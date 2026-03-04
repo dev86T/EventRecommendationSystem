@@ -61,6 +61,10 @@ const Profile = () => {
       setPasswordMsg({ type: 'error', text: 'Пароли не совпадают' });
       return;
     }
+    if (newPassword === oldPassword) {
+      setPasswordMsg({ type: 'error', text: 'Новый пароль должен отличаться от текущего' });
+      return;
+    }
     setPasswordLoading(true);
     setPasswordMsg(null);
     try {

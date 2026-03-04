@@ -12,4 +12,5 @@ public interface IGroupRepository
     Task<GroupMember> AddMemberAsync(GroupMember member);
     Task RemoveMemberAsync(Guid groupId, Guid userId);
     Task<bool> IsUserMemberAsync(Guid groupId, Guid userId);
+    Task DeleteAsync(Guid id);
 }

@@ -162,6 +162,16 @@ const GroupDetail = () => {
     }
   };
 
+  const handleDeleteGroup = async () => {
+    if (!window.confirm(`Вы уверены, что хотите удалить группу "${group.name}"? Это действие необратимо.`)) return;
+    try {
+      await groupsAPI.deleteGroup(id);
+      navigate('/groups');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Ошибка удаления группы');
+    }
+  };
+
   const handleOpenEditGroup = () => {
     setEditGroupName(group.name);
     setEditGroupDescription(group.description || '');
@@ -239,6 +249,11 @@ const GroupDetail = () => {
           <Link to={`/groups/${id}/decisions/new`} className="btn btn-primary">
             + Создать решение
           </Link>
+          {isCreator && (
+            <button className="btn btn-danger" onClick={handleDeleteGroup} title="Удалить группу">
+              🗑️ Удалить группу
+            </button>
+          )}
         </div>
       </div>
 
@@ -376,7 +391,7 @@ const GroupDetail = () => {
               return (
                 <div key={member.userId} className="member-item">
                   <div className="member-avatar" style={{ fontSize: '32px' }}>
-                    {getAnimalAvatar(member.user.email)}
+                    {member.user.avatarEmoji || getAnimalAvatar(member.user.email)}
                   </div>
                   <div className="member-info">
                     <div className="member-name">{member.user.username}</div>

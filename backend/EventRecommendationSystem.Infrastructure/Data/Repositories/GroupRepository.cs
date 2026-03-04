@@ -41,8 +41,20 @@ public class GroupRepository : IGroupRepository
             .Where(gm => gm.UserId == userId)
             .Include(gm => gm.Group)
                 .ThenInclude(g => g.Creator)
+            .Include(gm => gm.Group)
+                .ThenInclude(g => g.Members)
             .Select(gm => gm.Group)
             .ToListAsync();
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        var group = await _context.Groups.FindAsync(id);
+        if (group != null)
+        {
+            _context.Groups.Remove(group);
+            await _context.SaveChangesAsync();
+        }
     }
 
     public async Task<IEnumerable<GroupMember>> GetGroupMembersAsync(Guid groupId)
