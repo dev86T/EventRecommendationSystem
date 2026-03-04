@@ -254,17 +254,30 @@ const DecisionDetail = () => {
       ].filter(Boolean).join(' &nbsp;•&nbsp; ');
 
       const resultsHtml = currentResults ? (() => {
-        const winnerName = currentResults.winner
-          ? esc((decision.alternatives||[]).find(a => a.id === currentResults.winner)?.name || currentResults.winner)
-          : null;
-        const methodRows = (currentResults.methods || []).map(m => {
-          const name = esc((decision.alternatives||[]).find(a => a.id === m.winnerId)?.name || '');
-          return name ? `<div style="padding:6px 0;border-bottom:1px solid #f0f4f8;font-size:13px;"><strong style="color:#4a5568;">${esc(m.methodName || m.method)}:</strong> ${name}</div>` : '';
-        }).join('');
+        const methodKeys = ['Condorcet', 'KemenyYoung', 'Borda', 'Plurality'];
+        const methodNames = {
+          'Condorcet': 'Метод Кондорсе',
+          'KemenyYoung': 'Метод Кемени-Янга',
+          'Borda': 'Метод Борда',
+          'Plurality': 'Простое большинство',
+        };
+        const getResult = (key) => currentResults.results?.[key] || currentResults[key.toLowerCase()];
+        const methodRows = methodKeys.map(key => {
+          const r = getResult(key);
+          if (!r?.winnerName) return '';
+          const rankingRows = (r.rankings || []).slice(0, 3).map((item, idx) =>
+            `<span style="background:#edf2f7;border:1px solid #e2e8f0;border-radius:4px;padding:2px 8px;font-size:11px;margin:2px;">${['🥇','🥈','🥉'][idx]} ${esc(item.name)}</span>`
+          ).join('');
+          return `<div style="padding:8px 0;border-bottom:1px solid #f0f4f8;">
+            <div style="font-size:13px;margin-bottom:4px;"><strong style="color:#4a5568;">${methodNames[key]}:</strong> <strong style="color:#2d3748;">${esc(r.winnerName)}</strong></div>
+            ${rankingRows ? `<div style="display:flex;flex-wrap:wrap;gap:2px;">${rankingRows}</div>` : ''}
+          </div>`;
+        }).filter(Boolean).join('');
+        if (!methodRows) return '';
         return `<div style="margin-bottom:28px;">
           <h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">Результаты голосования</h2>
-          ${winnerName ? `<div style="padding:10px 14px;background:#f0fff4;border:1px solid #68d391;border-radius:8px;margin-bottom:12px;font-size:15px;">🏆 Победитель: <strong>${winnerName}</strong></div>` : ''}
           ${methodRows}
+          ${currentResults.analysis ? `<div style="margin-top:12px;padding:10px 14px;background:#ebf8ff;border:1px solid #90cdf4;border-radius:8px;font-size:13px;color:#2c5282;">${esc(currentResults.analysis)}</div>` : ''}
         </div>`;
       })() : '';
 

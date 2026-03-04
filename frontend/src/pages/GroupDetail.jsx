@@ -250,8 +250,8 @@ const GroupDetail = () => {
             + Создать решение
           </Link>
           {isCreator && (
-            <button className="btn btn-danger" onClick={handleDeleteGroup} title="Удалить группу">
-              🗑️ Удалить группу
+            <button className="btn-icon-subtle btn-icon-danger" onClick={handleDeleteGroup} title="Удалить группу">
+              🗑️
             </button>
           )}
         </div>
