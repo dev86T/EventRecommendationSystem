@@ -36,6 +36,15 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
+.btn-icon-danger {
+  color: #e53e3e;
+}
+
+.btn-icon-danger:hover {
+  background: rgba(229, 62, 62, 0.1) !important;
+  color: #c53030;
+}
+
 /* Modal (reused from DecisionDetail pattern) */
 .modal {
   position: fixed;
@@ -63,8 +72,6 @@
   padding: 32px;
   width: 100%;
   max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   animation: modalSlideUp 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
