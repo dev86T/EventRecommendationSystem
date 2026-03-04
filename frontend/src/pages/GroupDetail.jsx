@@ -366,6 +366,7 @@ const GroupDetail = () => {
                   value={editGroupDescription}
                   onChange={(e) => setEditGroupDescription(e.target.value)}
                   rows="3"
+                  style={{ resize: 'none' }}
                 />
               </div>
               <div className="modal-footer">
