@@ -382,7 +382,6 @@ textarea.form-control {
 /* ── Level 3: Inner sections (slightly lighter than panels) ── */
 [data-theme="dark"] .vote-item,
 [data-theme="dark"] .alternative-info-item,
-[data-theme="dark"] .alternative-card,
 [data-theme="dark"] .ranking-item,
 [data-theme="dark"] .metrics-section,
 [data-theme="dark"] .analysis-content,
@@ -406,6 +405,14 @@ textarea.form-control {
 [data-theme="dark"] .result-card {
   background: var(--color-bg-surface) !important;
   border-color: var(--color-border) !important;
+  color: var(--color-text-primary);
+}
+
+/* ── Alternative cards (CreateDecision & edit modal) — Level 4 for max contrast ── */
+[data-theme="dark"] .alternative-card {
+  background: var(--color-bg-surface) !important;
+  border-color: var(--color-border) !important;
+  border-radius: 14px;
   color: var(--color-text-primary);
 }
 

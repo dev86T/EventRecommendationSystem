@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { decisionsAPI, groupsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,7 @@ const DecisionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const pdfRef = useRef(null);
   const [decision, setDecision] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('vote');
@@ -22,6 +23,7 @@ const DecisionDetail = () => {
   const [deletingDecision, setDeletingDecision] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [editData, setEditData] = useState({ title: '', description: '', isBlindVoting: false, isAnonymous: false, alternatives: [] });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -205,8 +207,25 @@ const DecisionDetail = () => {
     }
   };
 
-  const handleExportPDF = () => {
-    window.print();
+  const handleExportPDF = async () => {
+    const el = pdfRef.current;
+    if (!el || exportingPdf) return;
+    setExportingPdf(true);
+    // Reveal element off-screen so html2canvas can render it
+    el.style.cssText = 'display:block;position:fixed;left:-9999px;top:0;width:794px;background:white;color:#333;padding:40px;font-family:Segoe UI,sans-serif;font-size:14px;';
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      await html2pdf().set({
+        margin: [10, 15, 10, 15],
+        filename: `${decision.title || 'решение'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(el).save();
+    } finally {
+      el.style.cssText = '';
+      setExportingPdf(false);
+    }
   };
 
   const handleRepeat = () => {
@@ -343,9 +362,10 @@ const DecisionDetail = () => {
               <button
                 className="btn btn-pdf"
                 onClick={handleExportPDF}
-                title="Сохранить как PDF"
+                disabled={exportingPdf}
+                title="Скачать PDF отчёт"
               >
-                📄 Сохранить PDF
+                {exportingPdf ? '⏳ Генерация...' : '📄 Скачать PDF'}
               </button>
             </div>
           </div>
@@ -494,8 +514,8 @@ const DecisionDetail = () => {
         </div>
       </div>
 
-      {/* Print-only report — hidden in browser, shown when printing */}
-      <div className="print-only">
+      {/* PDF report — hidden in browser, revealed off-screen for html2pdf capture */}
+      <div className="print-only" ref={pdfRef}>
         <div className="print-header">
           <h1>{decision.title}</h1>
           {decision.description && <p className="print-description">{decision.description}</p>}
