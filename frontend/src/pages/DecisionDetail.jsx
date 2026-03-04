@@ -208,22 +208,66 @@ const DecisionDetail = () => {
   };
 
   const handleExportPDF = async () => {
-    const el = pdfRef.current;
-    if (!el || exportingPdf) return;
+    if (exportingPdf) return;
     setExportingPdf(true);
-    // Reveal element off-screen so html2canvas can render it
-    el.style.cssText = 'display:block;position:fixed;left:-9999px;top:0;width:794px;background:white;color:#333;padding:40px;font-family:Segoe UI,sans-serif;font-size:14px;';
     try {
+      const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const altRows = (decision.alternatives || []).map((alt, i) => `
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f0f4f8;align-items:flex-start;">
+          <span style="min-width:26px;height:26px;background:#667eea;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0;">${i+1}</span>
+          <div><strong style="font-size:15px;">${esc(alt.name)}</strong>${alt.description ? `<p style="color:#718096;font-size:13px;margin:4px 0 0 0;">${esc(alt.description)}</p>` : ''}</div>
+        </div>`).join('');
+
+      const showVotes = (!decision.isBlindVoting || decision.isCompleted) && decision.votes?.length > 0;
+      const voteRows = showVotes ? (decision.votes || []).map(vote => {
+        const ranks = (vote.rankings || []).sort((a,b)=>a.rank-b.rank).map((r,idx)=>{
+          const name = esc((decision.alternatives||[]).find(a=>a.id===r.alternativeId)?.name||'');
+          return `<span style="background:#edf2f7;border:1px solid #e2e8f0;border-radius:4px;padding:3px 8px;font-size:12px;margin:2px;">${idx+1}. ${name}</span>`;
+        }).join('');
+        return `<div style="padding:10px 0;border-bottom:1px solid #f0f4f8;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <strong style="color:#2d3748;">${esc(decision.isAnonymous ? '🎭 Аноним' : vote.username)}</strong>
+            <span style="font-size:12px;color:#a0aec0;">${new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">${ranks}</div>
+        </div>`;
+      }).join('') : '';
+
+      const metaParts = [
+        `Статус: <strong>${decision.status==='Active'?'Активно':decision.status==='Completed'?'Завершено':'Отменено'}</strong>`,
+        decision.deadline ? `Дедлайн: ${new Date(decision.deadline).toLocaleString('ru-RU')}` : null,
+        decision.isBlindVoting ? '🙈 Слепое' : null,
+        decision.isAnonymous ? '🎭 Анонимное' : null,
+        `Голосов: ${decision.votes?.length||0}`,
+        `Создано: ${new Date(decision.createdAt).toLocaleDateString('ru-RU')}`,
+      ].filter(Boolean).join(' &nbsp;•&nbsp; ');
+
+      const html = `<div style="font-family:'Segoe UI',Arial,sans-serif;color:#333;padding:0;font-size:14px;">
+        <div style="border-bottom:3px solid #667eea;padding-bottom:16px;margin-bottom:24px;">
+          <h1 style="font-size:26px;margin:0 0 10px 0;color:#1a202c;">${esc(decision.title)}</h1>
+          ${decision.description ? `<p style="color:#4a5568;font-size:15px;margin:0 0 12px 0;">${esc(decision.description)}</p>` : ''}
+          <div style="font-size:13px;color:#718096;">${metaParts}</div>
+        </div>
+        <div style="margin-bottom:28px;">
+          <h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">Варианты для выбора (${(decision.alternatives||[]).length})</h2>
+          ${altRows}
+        </div>
+        ${showVotes ? `<div style="margin-bottom:28px;"><h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">Голоса участников (${decision.votes.length})</h2>${voteRows}</div>` : ''}
+        <div style="margin-top:32px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:11px;color:#a0aec0;text-align:right;">Экспортировано: ${new Date().toLocaleString('ru-RU')}</div>
+      </div>`;
+
       const html2pdf = (await import('html2pdf.js')).default;
       await html2pdf().set({
-        margin: [10, 15, 10, 15],
+        margin: [15, 15, 15, 15],
         filename: `${decision.title || 'решение'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(el).save();
+      }).from(html, 'string').save();
+    } catch (err) {
+      console.error('PDF error:', err);
+      setError('Ошибка при создании PDF');
+      setTimeout(() => setError(''), 3000);
     } finally {
-      el.style.cssText = '';
       setExportingPdf(false);
     }
   };
@@ -322,51 +366,30 @@ const DecisionDetail = () => {
               <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
             </div>
 
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="decision-actions">
               {canManage && !decision.isCompleted && (
                 <button
-                  className="btn btn-danger"
+                  className="btn btn-danger btn-complete"
                   onClick={handleCompleteVoting}
                   disabled={completingVoting}
-                  style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
                 >
                   {completingVoting ? 'Завершение...' : '🏁 Завершить голосование'}
                 </button>
               )}
-              {canManage && (
-                <>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={handleOpenEdit}
-                    style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
-                  >
-                    ✏️ Редактировать
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleRepeat}
-                    style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold' }}
-                  >
-                    🔄 Повторить
-                  </button>
-                  <button
-                    className="btn"
-                    onClick={handleDeleteDecision}
-                    disabled={deletingDecision}
-                    style={{ padding: '12px 24px', fontSize: '16px', fontWeight: 'bold', background: '#dc3545', color: 'white', border: 'none' }}
-                  >
-                    {deletingDecision ? 'Удаление...' : '🗑️ Удалить'}
-                  </button>
-                </>
-              )}
-              <button
-                className="btn btn-pdf"
-                onClick={handleExportPDF}
-                disabled={exportingPdf}
-                title="Скачать PDF отчёт"
-              >
-                {exportingPdf ? '⏳ Генерация...' : '📄 Скачать PDF'}
-              </button>
+              <div className="decision-icon-btns">
+                {canManage && (
+                  <>
+                    <button className="action-btn" onClick={handleOpenEdit} title="Редактировать">✏️</button>
+                    <button className="action-btn action-btn-repeat" onClick={handleRepeat} title="Повторить решение">🔄</button>
+                    <button className="action-btn action-btn-danger" onClick={handleDeleteDecision} disabled={deletingDecision} title="Удалить решение">
+                      {deletingDecision ? '⏳' : '🗑️'}
+                    </button>
+                  </>
+                )}
+                <button className="action-btn action-btn-pdf" onClick={handleExportPDF} disabled={exportingPdf} title="Скачать PDF">
+                  {exportingPdf ? '⏳' : '📄'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -514,8 +537,8 @@ const DecisionDetail = () => {
         </div>
       </div>
 
-      {/* PDF report — hidden in browser, revealed off-screen for html2pdf capture */}
-      <div className="print-only" ref={pdfRef}>
+      {/* Print-only report — shown only via Ctrl+P / @media print */}
+      <div className="print-only">
         <div className="print-header">
           <h1>{decision.title}</h1>
           {decision.description && <p className="print-description">{decision.description}</p>}
