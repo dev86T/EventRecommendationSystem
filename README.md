@@ -1,125 +1,118 @@
 # 🎯 Event Recommendation System
 
-**Система Рекомендаций Мероприятий** — платформа для коллективного принятия решений с использованием продвинутых алгоритмов голосования.
+**Система коллективного принятия решений** — веб-платформа, где группы людей могут создавать голосования, ранжировать варианты и получать результат сразу по четырём методам голосования.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue) ![.NET](https://img.shields.io/badge/.NET-8.0-purple) ![React](https://img.shields.io/badge/React-18-blue) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
-
----
-
-## 🌟 Возможности
-
-- ✅ **4 алгоритма голосования:** Condorcet, Kemeny-Young, Borda, Plurality
-- ⏱️ **Таймер обратного отсчёта** до дедлайна
-- 🏁 **Автоматическое завершение** голосования
-- 🗑️ **Удаление решений** (только создатель)
-- 📧 **Email уведомления** через Gmail
-- 🔐 **JWT аутентификация**
-- 🎨 **Drag-and-drop** ранжирование
+![.NET](https://img.shields.io/badge/.NET-8.0-purple) ![React](https://img.shields.io/badge/React-18-blue) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue) ![Docker](https://img.shields.io/badge/Docker-ready-2496ED)
 
 ---
 
-## 🚀 Быстрый старт
+## ✨ Возможности
+
+| Фича | Описание |
+|------|----------|
+| 🗳️ **4 метода голосования** | Condorcet, Kemeny-Young, Borda, Plurality |
+| 🖱️ **Drag-and-drop** | Интуитивное ранжирование вариантов |
+| ⏱️ **Таймер дедлайна** | Анимированный обратный отсчёт на карточках |
+| 🏁 **Завершение голосования** | Ручное или автоматическое по дедлайну |
+| 📄 **Экспорт в PDF** | Скачать итоги решения одной кнопкой |
+| 📧 **Email уведомления** | Инвайты и сброс пароля через Gmail |
+| 🌙 **Тёмная тема** | Полноценный dark mode |
+| 🔐 **JWT аутентификация** | Регистрация, вход, восстановление пароля |
+
+---
+
+## 🚀 Запуск
 
 ### Требования
 
-- .NET 8 SDK
-- Node.js 18+
-- Docker
+- [.NET 8 SDK](https://dotnet.microsoft.com/download)
+- [Node.js 18+](https://nodejs.org/)
+- [Docker](https://www.docker.com/)
 
-### Установка
+### Установка и запуск
 
 ```bash
-# 1. Распаковать архив
-tar -xzf event-recommendation-system.tar.gz
-cd event-recommendation-system/
+# 1. Клонировать репозиторий
+git clone <repo-url>
+cd EventRecommendationSystem
 
 # 2. Запустить PostgreSQL
 docker-compose up -d
 
-# 3. Backend
+# 3. Запустить Backend
 cd backend/EventRecommendationSystem.API
 dotnet ef database update
 dotnet run
 # → http://localhost:5000
 
-# 4. Frontend
-cd frontend/
+# 4. Запустить Frontend
+cd frontend
 npm install
-npm start
+npm run dev
 # → http://localhost:3000
 ```
 
----
-
-## ⚠️ ВАЖНО: Исправление статусов
-
-Если решения показывают статус **"Отменено"** вместо **"Активно"**, выполни:
-
-```bash
-docker exec -it eventrecommendation_db psql -U postgres -d eventrecommendation
-```
-
-Затем:
-
-```sql
-UPDATE "Decisions" SET "Status" = 0 WHERE "IsCompleted" = false;
-```
-
-Или используй файл: **`fix_decision_statuses.sql`**
-
-Подробнее: **`URGENT_FIX_GUIDE.md`**
+> **Windows:** можно использовать `start.bat` для одновременного запуска backend и frontend.
 
 ---
 
-## 📧 Настройка Email
+## 📧 Настройка email
 
 Отредактируй `backend/EventRecommendationSystem.API/appsettings.json`:
 
 ```json
 {
   "EmailSettings": {
-    "SenderEmail": "твой-email@gmail.com",
-    "SenderPassword": "твой-app-password"
+    "SenderEmail": "your-email@gmail.com",
+    "SenderPassword": "your-app-password"
   }
 }
 ```
 
-Подробнее: **`EMAIL_SETUP_GUIDE.md`**
+Для Gmail: [создать App Password](https://myaccount.google.com/apppasswords) (требуется включённая 2FA).
 
 ---
 
-## 📚 Документация
+## 🗄️ Утилиты базы данных
 
-- **`URGENT_FIX_GUIDE.md`** — исправление статусов и таймера
-- **`EMAIL_SETUP_GUIDE.md`** — настройка email
-- **`TROUBLESHOOTING.md`** — решение проблем
-- **`Описание_Проекта_Система_Рекомендаций.docx`** — описание для диплома
+| Файл | Назначение |
+|------|-----------|
+| `CLEAN_DATABASE.sql` | Полная очистка всех данных (оставляет структуру) |
+| `fix_decision_statuses.sql` | Исправить статусы решений если они сбились |
 
----
+```bash
+# Подключиться к БД
+docker exec -it eventrecommendation_db psql -U postgres -d eventrecommendation
 
-## 🎯 Использование
-
-1. **Регистрация** → http://localhost:3000/register
-2. **Создать группу** → Dashboard → "Создать группу"
-3. **Добавить участников** → По email
-4. **Создать решение** → Указать дедлайн, добавить варианты
-5. **Голосовать** → Drag-and-drop ранжирование
-6. **Результаты** → Сравнение 4 методов голосования
+# Выполнить скрипт
+\i /path/to/CLEAN_DATABASE.sql
+```
 
 ---
 
-## 🛠️ Технологии
+## 🛠️ Стек
 
-**Backend:** .NET 8, Entity Framework Core, PostgreSQL, JWT, MailKit  
-**Frontend:** React 18, React Router, Axios, React Beautiful DND  
-**DevOps:** Docker, Docker Compose
-
----
-
-## 👨‍💻 Автор
-
-Дипломный проект, 2026
+**Backend:** .NET 8 · Entity Framework Core · PostgreSQL · JWT · MailKit
+**Frontend:** React 18 · React Router · Axios · Recharts · html2pdf.js
+**Infra:** Docker · Docker Compose
 
 ---
 
-**Event Recommendation System — делаем групповые решения справедливыми! 🎉**
+## 📁 Структура
+
+```
+EventRecommendationSystem/
+├── backend/
+│   ├── EventRecommendationSystem.API/        # Web API, контроллеры
+│   ├── EventRecommendationSystem.Core/       # Доменные модели, интерфейсы
+│   └── EventRecommendationSystem.Infrastructure/  # EF Core, репозитории
+├── frontend/
+│   └── src/pages/                            # React страницы
+├── docker-compose.yml
+├── CLEAN_DATABASE.sql
+└── fix_decision_statuses.sql
+```
+
+---
+
+*Дипломный проект, 2026*
