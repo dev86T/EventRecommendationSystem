@@ -358,6 +358,13 @@ textarea.form-control {
 [data-theme="dark"] .btn-secondary:hover { background: #3a4a67; }
 [data-theme="dark"] .btn-icon-subtle:hover { background: rgba(255,255,255,0.08); }
 
+/* ── Decision icon action buttons ── */
+[data-theme="dark"] .action-btn { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .action-btn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.2); }
+[data-theme="dark"] .action-btn-repeat:hover { background: rgba(129,140,248,0.2); border-color: rgba(129,140,248,0.4); }
+[data-theme="dark"] .action-btn-danger:hover { background: #c53030; border-color: #c53030; }
+[data-theme="dark"] .action-btn-pdf:hover { background: #4a5568; border-color: #4a5568; }
+
 /* ── Level 2: Main page panels (replaces white) ── */
 [data-theme="dark"] .auth-card,
 [data-theme="dark"] .dashboard-card,
