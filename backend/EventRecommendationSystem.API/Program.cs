@@ -54,6 +54,11 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false)
+    .AddJsonFile("appsettings.Developer.json", optional: true)
+    .AddEnvironmentVariables();
+
 // CORS
 builder.Services.AddCors(options =>
 {
