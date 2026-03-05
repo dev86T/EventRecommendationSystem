@@ -5,7 +5,7 @@ echo ========================================
 
 echo.
 echo Waiting for services to start...
-timeout /t 1- /nobreak > nul
+timeout /t 10 /nobreak > nul
 
 echo.
 echo Opening browser...
