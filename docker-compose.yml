@@ -4,6 +4,7 @@ services:
   postgres:
     image: postgres:15
     container_name: eventrecommendation_db
+    restart: always
     environment:
       POSTGRES_DB: eventrecommendation
       POSTGRES_USER: postgres
@@ -18,5 +19,22 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build: ./backend/EventRecommendationSystem.API
+    container_name: event_backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    environment:
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=eventrecommendation;Username=postgres;Password=postgres
+    
+  frontend:
+    build: ./frontend
+    container_name: event_frontend
+    ports:
+      - "3000:3000"
+    depends:
+      - backend
 volumes:
   postgres_data:
