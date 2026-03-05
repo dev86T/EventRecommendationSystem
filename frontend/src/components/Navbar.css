@@ -1,15 +1,16 @@
+/* ── Base navbar ── */
 .navbar {
   background: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 500;
 }
 
 .navbar-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 16px 20px;
+  padding: 14px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -21,12 +22,24 @@
   color: #667eea;
   text-decoration: none;
   transition: color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .navbar-logo:hover {
   color: #764ba2;
 }
 
+/* Truncate long logo text on smaller screens */
+.navbar-logo-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Desktop menu ── */
 .navbar-menu {
   display: flex;
   align-items: center;
@@ -38,6 +51,7 @@
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s;
+  white-space: nowrap;
 }
 
 .navbar-link:hover {
@@ -55,6 +69,7 @@
   color: #333;
   text-decoration: none;
   transition: color 0.2s;
+  white-space: nowrap;
 }
 
 .navbar-username:hover {
@@ -66,6 +81,7 @@
   font-size: 13px;
 }
 
+/* ── User code badge (desktop) ── */
 .user-code-badge {
   position: relative;
   display: flex;
@@ -122,3 +138,248 @@
   border: 5px solid transparent;
   border-bottom-color: #333;
 }
+
+/* ══════════════════════════════════════
+   HAMBURGER BUTTON
+══════════════════════════════════════ */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.hamburger:hover {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #333;
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform-origin: center;
+}
+
+/* Animate to X when open */
+.hamburger--open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.hamburger--open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.hamburger--open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ══════════════════════════════════════
+   OVERLAY
+══════════════════════════════════════ */
+.nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 600;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-overlay--visible {
+  opacity: 1;
+}
+
+/* ══════════════════════════════════════
+   SIDE DRAWER
+══════════════════════════════════════ */
+.nav-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 280px;
+  background: white;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: 700;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+}
+
+.nav-drawer--open {
+  transform: translateX(0);
+}
+
+/* Drawer user block */
+.nav-drawer-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 16px;
+}
+
+.nav-drawer-avatar {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.nav-drawer-user-info {
+  min-width: 0;
+}
+
+.nav-drawer-username {
+  font-weight: 700;
+  font-size: 16px;
+  color: #2d3748;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-drawer-email {
+  font-size: 12px;
+  color: #718096;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Drawer code badge */
+.nav-drawer-code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-radius: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 20px;
+  transition: opacity 0.2s;
+}
+
+.nav-drawer-code:hover {
+  opacity: 0.88;
+}
+
+.nav-drawer-code .user-code-label {
+  font-size: 11px;
+}
+
+.nav-drawer-code .user-code-value {
+  font-size: 18px;
+  letter-spacing: 3px;
+}
+
+/* Drawer nav links */
+.nav-drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-drawer-link {
+  display: block;
+  padding: 13px 14px;
+  border-radius: 10px;
+  color: #2d3748;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-drawer-link:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.nav-drawer-logout {
+  width: 100%;
+  margin-top: 16px;
+}
+
+/* ══════════════════════════════════════
+   MOBILE BREAKPOINT
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+  .navbar-menu {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .nav-overlay {
+    display: block;
+  }
+
+  .navbar-logo-text {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 400px) {
+  .navbar-logo-text {
+    max-width: 140px;
+    font-size: 16px;
+  }
+}
+
+/* ── Dark theme ── */
+[data-theme="dark"] .navbar {
+  background: var(--color-navbar-bg);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .navbar-logo { color: #818cf8; }
+[data-theme="dark"] .navbar-link { color: var(--color-text-secondary); }
+[data-theme="dark"] .navbar-link:hover,
+[data-theme="dark"] .navbar-username:hover { color: #818cf8; }
+[data-theme="dark"] .navbar-username { color: var(--color-text-primary); }
+
+[data-theme="dark"] .hamburger span { background: var(--color-text-primary); }
+[data-theme="dark"] .hamburger:hover { background: rgba(255,255,255,0.08); }
+
+[data-theme="dark"] .nav-drawer {
+  background: var(--color-bg-card);
+  box-shadow: -4px 0 24px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .nav-drawer-user { border-color: var(--color-border); }
+[data-theme="dark"] .nav-drawer-username { color: var(--color-text-primary); }
+[data-theme="dark"] .nav-drawer-email { color: var(--color-text-muted); }
+
+[data-theme="dark"] .nav-drawer-link {
+  color: var(--color-text-primary);
+}
+[data-theme="dark"] .nav-drawer-link:hover {
+  background: rgba(129,140,248,0.12);
+  color: #818cf8;
+}
+
+[data-theme="dark"] .user-code-tooltip { background: #cbd5e0; color: #1a202c; }
+[data-theme="dark"] .user-code-tooltip::before { border-bottom-color: #cbd5e0; }

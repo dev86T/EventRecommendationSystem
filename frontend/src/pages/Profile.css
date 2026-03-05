@@ -108,6 +108,25 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
 }
 
+@media (max-width: 768px) {
+  .profile-page { padding: 16px 12px; }
+
+  .profile-header-card {
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
+  .profile-section-card {
+    padding: 20px 16px;
+  }
+
+  .avatar-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+  }
+}
+
 @media (max-width: 500px) {
   .profile-header-card {
     flex-direction: column;

@@ -93,3 +93,35 @@
   padding-top: 32px;
   border-top: 1px solid #e0e0e0;
 }
+
+@media (max-width: 768px) {
+  .create-decision { padding: 16px 12px; }
+
+  .page-card {
+    padding: 24px 16px;
+  }
+
+  .page-card h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .alternatives-section h3 {
+    font-size: 17px;
+  }
+
+  .alternative-card {
+    padding: 16px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}
