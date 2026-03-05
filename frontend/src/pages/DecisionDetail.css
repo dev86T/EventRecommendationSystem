@@ -331,6 +331,60 @@
   border-color: #2d3748;
 }
 
+/* ── Mobile Responsive ── */
+@media (max-width: 768px) {
+  .decision-detail { padding: 16px 12px; }
+
+  .decision-header-card {
+    padding: 20px 16px;
+  }
+
+  .decision-header-card h1 {
+    font-size: 22px;
+  }
+
+  .tabs {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .tab {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  .tab-content {
+    padding: 20px 16px;
+    min-height: auto;
+  }
+
+  .modal-content {
+    padding: 20px 16px;
+  }
+
+  .modal-header h2 {
+    font-size: 18px;
+  }
+
+  .modal-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .vote-user {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .decision-actions {
+    gap: 8px;
+  }
+
+  .info-card h3 {
+    font-size: 17px;
+  }
+}
+
 /* ============================================
    PRINT / PDF STYLES
    ============================================ */

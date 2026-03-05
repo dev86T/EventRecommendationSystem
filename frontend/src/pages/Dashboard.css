@@ -114,3 +114,31 @@
   font-size: 14px;
   color: #999;
 }
+
+@media (max-width: 768px) {
+  .dashboard { padding: 16px 12px; }
+
+  .dashboard-header { margin-bottom: 24px; }
+
+  .dashboard-header h1 { font-size: 26px; }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .dashboard-card {
+    padding: 20px 16px;
+  }
+
+  .dashboard-card-value {
+    font-size: 36px;
+  }
+
+  .recent-groups { margin-top: 32px; }
+
+  .recent-groups h2 { font-size: 22px; }
+
+  .group-meta { flex-wrap: wrap; gap: 8px; }
+}
