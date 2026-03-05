@@ -1,40 +1,46 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
+  db:
+    image: postgres:16
     container_name: eventrecommendation_db
-    restart: always
     environment:
-      POSTGRES_DB: eventrecommendation
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: eventrecommendation
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   backend:
-    build: ./backend/EventRecommendationSystem.API
-    container_name: event_backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eventrecommendation_backend
     ports:
       - "5000:5000"
-    depends_on:
-      - postgres
     environment:
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=eventrecommendation;Username=postgres;Password=postgres
-    
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=eventrecommendation;Username=postgres;Password=postgres
+    depends_on:
+      db:
+        condition: service_healthy
+
   frontend:
-    build: ./frontend
-    container_name: event_frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eventrecommendation_frontend
     ports:
       - "3000:3000"
-    depends:
+    depends_on:
       - backend
+
 volumes:
-  postgres_data:
+  pgdata:
