@@ -40,3 +40,7 @@ logs/
 # Environment
 .env
 .env.local
+
+# local configs
+appsettings.Developer.json
+**/appsettings.Developer.json
