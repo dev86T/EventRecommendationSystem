@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import './Auth.css';
 
 const Login = () => {
@@ -9,6 +10,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -17,24 +19,24 @@ const Login = () => {
     setLoading(true);
 
     const result = await login(email, password);
-    
+
     if (result.success) {
       navigate('/dashboard');
     } else {
       setError(result.error);
     }
-    
+
     setLoading(false);
   };
 
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-title">Вход в систему</h1>
-        <p className="auth-subtitle">Система поддержки групповых решений</p>
-        
+        <h1 className="auth-title">{t('login.title')}</h1>
+        <p className="auth-subtitle">{t('login.subtitle')}</p>
+
         {error && <div className="alert alert-danger">{error}</div>}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
@@ -47,9 +49,9 @@ const Login = () => {
               placeholder="your@email.com"
             />
           </div>
-          
+
           <div className="form-group">
-            <label>Пароль</label>
+            <label>{t('login.password')}</label>
             <input
               type="password"
               className="form-control"
@@ -59,22 +61,22 @@ const Login = () => {
               placeholder="••••••••"
             />
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="btn btn-primary btn-block"
             disabled={loading}
           >
-            {loading ? 'Вход...' : 'Войти'}
+            {loading ? t('login.signingIn') : t('login.signIn')}
           </button>
         </form>
-        
+
         <p className="auth-footer">
-          <Link to="/forgot-password">Забыли пароль?</Link>
+          <Link to="/forgot-password">{t('login.forgotPassword')}</Link>
         </p>
-        
+
         <p className="auth-footer">
-          Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+          {t('login.noAccount')} <Link to="/register">{t('login.register')}</Link>
         </p>
       </div>
     </div>
