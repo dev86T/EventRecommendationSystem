@@ -29,6 +29,13 @@ export const LanguageProvider = ({ children }) => {
     localStorage.setItem('language', next);
   };
 
+  const selectLanguage = (lang) => {
+    if (LANGUAGES.includes(lang)) {
+      setLanguage(lang);
+      localStorage.setItem('language', lang);
+    }
+  };
+
   const t = (key, vars = {}) => {
     const keys = key.split('.');
     let value = translations[language];
@@ -44,7 +51,7 @@ export const LanguageProvider = ({ children }) => {
   };
 
   return (
-    <LanguageContext.Provider value={{ language, cycleLanguage, t, translations: translations[language] }}>
+    <LanguageContext.Provider value={{ language, cycleLanguage, selectLanguage, t, translations: translations[language] }}>
       {children}
     </LanguageContext.Provider>
   );
