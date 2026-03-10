@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { groupsAPI } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import './Groups.css';
 
 const Groups = () => {
@@ -8,6 +9,8 @@ const Groups = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newGroup, setNewGroup] = useState({ name: '', description: '' });
+  const { t, language } = useLanguage();
+  const dateLocale = { en: 'en-US', de: 'de-DE', ru: 'ru-RU' }[language] || 'en-US';
 
   useEffect(() => {
     loadGroups();
@@ -33,30 +36,30 @@ const Groups = () => {
       loadGroups();
     } catch (error) {
       console.error('Error creating group:', error);
-      alert('Ошибка создания группы');
+      alert(t('groups.errorCreating'));
     }
   };
 
   if (loading) {
-    return <div className="loading">Загрузка...</div>;
+    return <div className="loading">{t('common.loading')}</div>;
   }
 
   return (
     <div className="container groups-page">
       <div className="page-header">
-        <h1>Мои группы</h1>
+        <h1>{t('groups.title')}</h1>
         <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          + Создать группу
+          {t('groups.createGroup')}
         </button>
       </div>
 
       {groups.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">👥</div>
-          <h2>У вас пока нет групп</h2>
-          <p>Создайте группу для начала совместного принятия решений</p>
+          <h2>{t('groups.noGroupsTitle')}</h2>
+          <p>{t('groups.noGroupsDesc')}</p>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            Создать первую группу
+            {t('groups.createFirstGroup')}
           </button>
         </div>
       ) : (
@@ -69,11 +72,11 @@ const Groups = () => {
               <p className="group-description">{group.description}</p>
               <div className="group-footer">
                 <div className="group-info">
-                  <span>👥 {group.memberCount} участников</span>
+                  <span>👥 {group.memberCount} {t('common.participants')}</span>
                   <span>👤 {group.creator.username}</span>
                 </div>
                 <span className="group-date">
-                  {new Date(group.createdAt).toLocaleDateString('ru-RU')}
+                  {new Date(group.createdAt).toLocaleDateString(dateLocale)}
                 </span>
               </div>
             </Link>
@@ -84,34 +87,34 @@ const Groups = () => {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Создать новую группу</h2>
+            <h2>{t('groups.modal.title')}</h2>
             <form onSubmit={handleCreateGroup}>
               <div className="form-group">
-                <label>Название группы</label>
+                <label>{t('groups.modal.nameLabel')}</label>
                 <input
                   type="text"
                   className="form-control"
                   value={newGroup.name}
                   onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
                   required
-                  placeholder="Например: Выбор места для отдыха"
+                  placeholder={t('groups.modal.namePlaceholder')}
                 />
               </div>
               <div className="form-group">
-                <label>Описание</label>
+                <label>{t('groups.modal.descLabel')}</label>
                 <textarea
                   className="form-control"
                   value={newGroup.description}
                   onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
-                  placeholder="Краткое описание группы и её целей"
+                  placeholder={t('groups.modal.descPlaceholder')}
                 />
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                  Отмена
+                  {t('groups.modal.cancel')}
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Создать
+                  {t('groups.modal.create')}
                 </button>
               </div>
             </form>

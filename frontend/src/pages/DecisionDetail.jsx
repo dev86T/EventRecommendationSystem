@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { decisionsAPI, groupsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import VotingInterface from '../components/VotingInterface';
 import ResultsDisplay from '../components/ResultsDisplay';
 import './DecisionDetail.css';
@@ -10,7 +11,11 @@ const DecisionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const pdfRef = useRef(null);
+
+  const dateLocale = { en: 'en-US', de: 'de-DE', ru: 'ru-RU' }[language] || 'en-US';
+
   const [decision, setDecision] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('vote');
@@ -27,6 +32,21 @@ const DecisionDetail = () => {
   const [editData, setEditData] = useState({ title: '', description: '', isBlindVoting: false, isAnonymous: false, alternatives: [] });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const formatTimeLeft = (diff) => {
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    const d = t('groupDetail.timeSuffixes.days');
+    const h = t('groupDetail.timeSuffixes.hours');
+    const m = t('groupDetail.timeSuffixes.minutes');
+    const s = t('groupDetail.timeSuffixes.seconds');
+    if (days > 0) return `${days}${d} ${hours}${h} ${minutes}${m}`;
+    if (hours > 0) return `${hours}${h} ${minutes}${m} ${seconds}${s}`;
+    if (minutes > 0) return `${minutes}${m} ${seconds}${s}`;
+    return `${seconds}${s}`;
+  };
 
   useEffect(() => {
     loadDecision();
@@ -65,26 +85,18 @@ const DecisionDetail = () => {
       const diff = deadline - now;
 
       if (diff <= 0) {
-        setTimeLeft('Время истекло');
+        setTimeLeft(t('decisionDetail.timeExpired'));
         setTimeout(() => window.location.reload(), 2000);
         return;
       }
 
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      if (days > 0) setTimeLeft(`${days}д ${hours}ч ${minutes}м`);
-      else if (hours > 0) setTimeLeft(`${hours}ч ${minutes}м ${seconds}с`);
-      else if (minutes > 0) setTimeLeft(`${minutes}м ${seconds}с`);
-      else setTimeLeft(`${seconds}с`);
+      setTimeLeft(formatTimeLeft(diff));
     };
 
     calculateTimeLeft();
     const interval = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(interval);
-  }, [decision?.deadline, decision?.isCompleted]);
+  }, [decision?.deadline, decision?.isCompleted, language]);
 
   const loadDecision = async () => {
     try {
@@ -92,7 +104,7 @@ const DecisionDetail = () => {
       setDecision(response.data);
     } catch (error) {
       console.error('Error loading decision:', error);
-      setError('Ошибка загрузки решения');
+      setError(t('decisionDetail.errorLoadingDecision'));
     } finally {
       setLoading(false);
     }
@@ -102,11 +114,11 @@ const DecisionDetail = () => {
     try {
       await decisionsAPI.submitVote(id, rankings);
       await loadDecision();
-      setSuccess('Голос успешно принят!');
+      setSuccess(t('decisionDetail.voteAccepted'));
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error submitting vote:', error);
-      setError('Ошибка при отправке голоса');
+      setError(t('decisionDetail.voteError'));
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -119,7 +131,7 @@ const DecisionDetail = () => {
       setActiveTab('results');
     } catch (error) {
       console.error('Error calculating results:', error);
-      setError('Ошибка при расчете результатов');
+      setError(t('decisionDetail.errorCalcResults'));
       setTimeout(() => setError(''), 3000);
     } finally {
       setCalculatingResults(false);
@@ -127,16 +139,16 @@ const DecisionDetail = () => {
   };
 
   const handleCompleteVoting = async () => {
-    if (!window.confirm('Вы уверены, что хотите завершить голосование? Это действие необратимо.')) return;
+    if (!window.confirm(t('decisionDetail.confirmCompleteVoting'))) return;
     try {
       setCompletingVoting(true);
       setError('');
       await decisionsAPI.complete(id);
-      setSuccess('Голосование завершено!');
+      setSuccess(t('decisionDetail.votingCompleted'));
       setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
       console.error('Error completing voting:', err);
-      setError(err.response?.data?.message || 'Ошибка при завершении голосования');
+      setError(err.response?.data?.message || t('decisionDetail.errorCompletingVoting'));
       setTimeout(() => setError(''), 3000);
     } finally {
       setCompletingVoting(false);
@@ -144,18 +156,18 @@ const DecisionDetail = () => {
   };
 
   const handleDeleteDecision = async () => {
-    if (!window.confirm('Вы уверены, что хотите удалить это решение? Все голоса будут потеряны. Это действие НЕОБРАТИМО!')) return;
-    if (!window.confirm('Последнее предупреждение! Удалить решение?')) return;
+    if (!window.confirm(t('decisionDetail.confirmDeleteDecision'))) return;
+    if (!window.confirm(t('decisionDetail.confirmDeleteDecision2'))) return;
     try {
       setDeletingDecision(true);
       setError('');
       const api = (await import('../services/api')).default;
       await api.delete(`/decisions/${id}`);
-      setSuccess('Решение удалено!');
+      setSuccess(t('decisionDetail.decisionDeleted'));
       setTimeout(() => navigate(`/groups/${decision.groupId}`), 1500);
     } catch (err) {
       console.error('Error deleting decision:', err);
-      setError(err.response?.data?.message || 'Ошибка при удалении решения');
+      setError(err.response?.data?.message || t('decisionDetail.errorDeletingDecision'));
       setTimeout(() => setError(''), 3000);
     } finally {
       setDeletingDecision(false);
@@ -197,10 +209,10 @@ const DecisionDetail = () => {
       }
       setShowEditModal(false);
       await loadDecision();
-      setSuccess('Решение успешно обновлено!');
+      setSuccess(t('decisionDetail.decisionUpdated'));
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Ошибка обновления');
+      setError(err.response?.data?.message || t('decisionDetail.errorUpdating'));
       setTimeout(() => setError(''), 3000);
     } finally {
       setEditSaving(false);
@@ -223,6 +235,7 @@ const DecisionDetail = () => {
           setResults(res.data);
         } catch (e) { /* skip if fails */ }
       }
+
       const altRows = (decision.alternatives || []).map((alt, i) => `
         <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f0f4f8;align-items:flex-start;">
           <span style="min-width:26px;height:26px;background:#667eea;color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0;">${i+1}</span>
@@ -237,29 +250,33 @@ const DecisionDetail = () => {
         }).join('');
         return `<div style="padding:10px 0;border-bottom:1px solid #f0f4f8;">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-            <strong style="color:#2d3748;">${esc(decision.isAnonymous ? '🎭 Аноним' : vote.username)}</strong>
-            <span style="font-size:12px;color:#a0aec0;">${new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
+            <strong style="color:#2d3748;">${esc(decision.isAnonymous ? t('decisionDetail.pdf.anon') : vote.username)}</strong>
+            <span style="font-size:12px;color:#a0aec0;">${new Date(vote.createdAt).toLocaleDateString(dateLocale)}</span>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;">${ranks}</div>
         </div>`;
       }).join('') : '';
 
+      const statusLabel = language === 'ru' ? 'Статус' : 'Status';
+      const statusVal = decision.status === 'Active' ? t('decisionDetail.pdf.statusActive') :
+        decision.status === 'Completed' ? t('decisionDetail.pdf.statusCompleted') : t('decisionDetail.pdf.statusCancelled');
+
       const metaParts = [
-        `Статус: <strong>${decision.status==='Active'?'Активно':decision.status==='Completed'?'Завершено':'Отменено'}</strong>`,
-        decision.deadline ? `Дедлайн: ${new Date(decision.deadline).toLocaleString('ru-RU')}` : null,
-        decision.isBlindVoting ? '🙈 Слепое' : null,
-        decision.isAnonymous ? '🎭 Анонимное' : null,
-        `Голосов: ${decision.votes?.length||0}`,
-        `Создано: ${new Date(decision.createdAt).toLocaleDateString('ru-RU')}`,
+        `${statusLabel}: <strong>${statusVal}</strong>`,
+        decision.deadline ? `${t('decisionDetail.pdf.deadline')}: ${new Date(decision.deadline).toLocaleString(dateLocale)}` : null,
+        decision.isBlindVoting ? t('decisionDetail.pdf.blind') : null,
+        decision.isAnonymous ? t('decisionDetail.pdf.anon') : null,
+        `${t('decisionDetail.pdf.votes')}: ${decision.votes?.length||0}`,
+        `${t('decisionDetail.pdf.created')}: ${new Date(decision.createdAt).toLocaleDateString(dateLocale)}`,
       ].filter(Boolean).join(' &nbsp;•&nbsp; ');
 
       const resultsHtml = currentResults ? (() => {
         const methodKeys = ['Condorcet', 'KemenyYoung', 'Borda', 'Plurality'];
         const methodNames = {
-          'Condorcet': 'Метод Кондорсе',
-          'KemenyYoung': 'Метод Кемени-Янга',
-          'Borda': 'Метод Борда',
-          'Plurality': 'Простое большинство',
+          'Condorcet': t('decisionDetail.methodNames.Condorcet'),
+          'KemenyYoung': t('decisionDetail.methodNames.KemenyYoung'),
+          'Borda': t('decisionDetail.methodNames.Borda'),
+          'Plurality': t('decisionDetail.methodNames.Plurality'),
         };
         const getResult = (key) => currentResults.results?.[key] || currentResults[key.toLowerCase()];
         const methodRows = methodKeys.map(key => {
@@ -275,7 +292,7 @@ const DecisionDetail = () => {
         }).filter(Boolean).join('');
         if (!methodRows) return '';
         return `<div style="margin-bottom:28px;">
-          <h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">Результаты голосования</h2>
+          <h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">${t('decisionDetail.pdf.results')}</h2>
           ${methodRows}
           ${currentResults.analysis ? `<div style="margin-top:12px;padding:10px 14px;background:#ebf8ff;border:1px solid #90cdf4;border-radius:8px;font-size:13px;color:#2c5282;">${esc(currentResults.analysis)}</div>` : ''}
         </div>`;
@@ -288,24 +305,24 @@ const DecisionDetail = () => {
           <div style="font-size:13px;color:#718096;">${metaParts}</div>
         </div>
         <div style="margin-bottom:28px;">
-          <h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">Варианты для выбора (${(decision.alternatives||[]).length})</h2>
+          <h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">${t('decisionDetail.pdf.options')} (${(decision.alternatives||[]).length})</h2>
           ${altRows}
         </div>
-        ${showVotes ? `<div style="margin-bottom:28px;"><h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">Голоса участников (${decision.votes.length})</h2>${voteRows}</div>` : ''}
+        ${showVotes ? `<div style="margin-bottom:28px;"><h2 style="font-size:17px;color:#2d3748;border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin-bottom:12px;">${t('decisionDetail.pdf.participantVotes')} (${decision.votes.length})</h2>${voteRows}</div>` : ''}
         ${resultsHtml}
-        <div style="margin-top:32px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:11px;color:#a0aec0;text-align:right;">Экспортировано: ${new Date().toLocaleString('ru-RU')}</div>
+        <div style="margin-top:32px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:11px;color:#a0aec0;text-align:right;">${t('decisionDetail.pdf.exported')}: ${new Date().toLocaleString(dateLocale)}</div>
       </div>`;
 
       const html2pdf = (await import('html2pdf.js')).default;
       await html2pdf().set({
         margin: [15, 15, 15, 15],
-        filename: `${decision.title || 'решение'}.pdf`,
+        filename: `${decision.title || 'decision'}.pdf`,
         html2canvas: { scale: 2, useCORS: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       }).from(html, 'string').save();
     } catch (err) {
       console.error('PDF error:', err);
-      setError('Ошибка при создании PDF');
+      setError(t('common.error'));
       setTimeout(() => setError(''), 3000);
     } finally {
       setExportingPdf(false);
@@ -329,7 +346,7 @@ const DecisionDetail = () => {
   if (loading) {
     return (
       <div className="container">
-        <div className="loading">Загрузка...</div>
+        <div className="loading">{t('common.loading')}</div>
       </div>
     );
   }
@@ -337,7 +354,7 @@ const DecisionDetail = () => {
   if (!decision) {
     return (
       <div className="container">
-        <div className="alert alert-danger">Решение не найдено</div>
+        <div className="alert alert-danger">{t('decisionDetail.notFound')}</div>
       </div>
     );
   }
@@ -363,7 +380,7 @@ const DecisionDetail = () => {
             {decision.deadline && (
               <div style={{ marginTop: '15px', marginBottom: '10px' }}>
                 <p style={{ margin: '5px 0', color: '#555' }}>
-                  <strong>📅 Дедлайн:</strong> {new Date(decision.deadline).toLocaleString('ru-RU')}
+                  <strong>{t('decisionDetail.deadlineLabel')}:</strong> {new Date(decision.deadline).toLocaleString(dateLocale)}
                 </p>
                 {!decision.isCompleted && timeLeft && (
                   <div style={{
@@ -377,7 +394,7 @@ const DecisionDetail = () => {
                     fontWeight: 'bold',
                     boxShadow: '0 4px 12px rgba(118, 75, 162, 0.3)'
                   }}>
-                    ⏱️ Осталось: {timeLeft}
+                    {t('decisionDetail.timeLeftLabel')}: {timeLeft}
                   </div>
                 )}
               </div>
@@ -388,22 +405,22 @@ const DecisionDetail = () => {
                 decision.status === 'Active' ? 'badge-success' :
                 decision.status === 'Completed' ? 'badge-primary' : 'badge-danger'
               }`}>
-                {decision.status === 'Active' ? '✅ Активно' :
-                 decision.status === 'Completed' ? '🏁 Завершено' : '❌ Отменено'}
+                {decision.status === 'Active' ? t('decisionDetail.statusActive') :
+                 decision.status === 'Completed' ? t('decisionDetail.statusCompleted') : t('decisionDetail.statusCancelled')}
               </span>
               {decision.isBlindVoting && (
-                <span className="badge" style={{ background: '#4a5568', color: 'white' }} title="Участники не видят чужие голоса во время голосования">
-                  🙈 Слепое
+                <span className="badge" style={{ background: '#4a5568', color: 'white' }} title={t('decisionDetail.edit.blindDesc')}>
+                  {t('decisionDetail.blindVoting')}
                 </span>
               )}
               {decision.isAnonymous && (
-                <span className="badge" style={{ background: '#6b46c1', color: 'white' }} title="Имена участников скрыты">
-                  🎭 Анонимное
+                <span className="badge" style={{ background: '#6b46c1', color: 'white' }} title={t('decisionDetail.edit.anonymousDesc')}>
+                  {t('decisionDetail.anonymous')}
                 </span>
               )}
-              <span>📋 {decision.alternatives?.length || 0} вариантов</span>
-              <span>🗳️ {decision.votes?.length || 0} голосов</span>
-              <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
+              <span>📋 {decision.alternatives?.length || 0} {t('decisionDetail.alternatives')}</span>
+              <span>🗳️ {decision.votes?.length || 0} {t('decisionDetail.votes')}</span>
+              <span>📅 {new Date(decision.createdAt).toLocaleDateString(dateLocale)}</span>
             </div>
 
             <div className="decision-actions">
@@ -413,20 +430,20 @@ const DecisionDetail = () => {
                   onClick={handleCompleteVoting}
                   disabled={completingVoting}
                 >
-                  {completingVoting ? 'Завершение...' : '🏁 Завершить голосование'}
+                  {completingVoting ? t('decisionDetail.completing') : t('decisionDetail.completeVoting')}
                 </button>
               )}
               <div className="decision-icon-btns">
                 {canManage && (
                   <>
-                    <button className="action-btn" onClick={handleOpenEdit} title="Редактировать">✏️</button>
-                    <button className="action-btn action-btn-repeat" onClick={handleRepeat} title="Повторить решение">🔄</button>
-                    <button className="action-btn action-btn-danger" onClick={handleDeleteDecision} disabled={deletingDecision} title="Удалить решение">
+                    <button className="action-btn" onClick={handleOpenEdit} title={t('common.edit')}>✏️</button>
+                    <button className="action-btn action-btn-repeat" onClick={handleRepeat} title="🔄">🔄</button>
+                    <button className="action-btn action-btn-danger" onClick={handleDeleteDecision} disabled={deletingDecision} title={t('common.delete')}>
                       {deletingDecision ? '⏳' : '🗑️'}
                     </button>
                   </>
                 )}
-                <button className="action-btn action-btn-pdf" onClick={handleExportPDF} disabled={exportingPdf} title="Скачать PDF">
+                <button className="action-btn action-btn-pdf" onClick={handleExportPDF} disabled={exportingPdf} title="PDF">
                   {exportingPdf ? '⏳' : '📄'}
                 </button>
               </div>
@@ -436,13 +453,13 @@ const DecisionDetail = () => {
 
         <div className="tabs">
           <button className={`tab ${activeTab === 'vote' ? 'active' : ''}`} onClick={() => setActiveTab('vote')}>
-            Голосование
+            {t('decisionDetail.tabs.vote')}
           </button>
           <button className={`tab ${activeTab === 'results' ? 'active' : ''}`} onClick={() => setActiveTab('results')}>
-            Результаты
+            {t('decisionDetail.tabs.results')}
           </button>
           <button className={`tab ${activeTab === 'info' ? 'active' : ''}`} onClick={() => setActiveTab('info')}>
-            Информация
+            {t('decisionDetail.tabs.info')}
           </button>
         </div>
 
@@ -462,14 +479,14 @@ const DecisionDetail = () => {
                     boxShadow: '0 8px 32px rgba(0,0,0,0.12)', textAlign: 'center', maxWidth: '500px'
                   }}>
                     <div style={{ fontSize: '64px', marginBottom: '20px' }}>🏁</div>
-                    <h2 style={{ color: '#764ba2', marginBottom: '15px', fontSize: '28px' }}>Голосование завершено</h2>
-                    <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px' }}>Спасибо всем за участие!</p>
+                    <h2 style={{ color: '#764ba2', marginBottom: '15px', fontSize: '28px' }}>{t('decisionDetail.voteCompleted.title')}</h2>
+                    <p style={{ color: '#666', fontSize: '16px', marginBottom: '20px' }}>{t('decisionDetail.voteCompleted.thanks')}</p>
                     <button
                       className="btn btn-primary"
                       onClick={() => setActiveTab('results')}
                       style={{ padding: '12px 32px', fontSize: '16px' }}
                     >
-                      📊 Посмотреть результаты
+                      {t('decisionDetail.voteCompleted.viewResults')}
                     </button>
                   </div>
                 </div>
@@ -477,13 +494,13 @@ const DecisionDetail = () => {
 
               {decision.status !== 'Active' ? (
                 <div className="alert alert-info">
-                  Голосование завершено. Перейдите на вкладку "Результаты" для просмотра итогов.
+                  {t('decisionDetail.voteAlreadyCompleted')}
                 </div>
               ) : (
                 <>
                   {hasVoted && (
                     <div className="alert alert-success">
-                      ✓ Вы уже проголосовали. Вы можете изменить свой выбор, переупорядочив варианты.
+                      {t('decisionDetail.alreadyVoted')}
                     </div>
                   )}
                   <VotingInterface
@@ -504,10 +521,10 @@ const DecisionDetail = () => {
                   onClick={() => calculateResults('all')}
                   disabled={calculatingResults || (decision.votes?.length || 0) === 0}
                 >
-                  {calculatingResults ? 'Расчет...' : 'Рассчитать результаты'}
+                  {calculatingResults ? t('decisionDetail.results.calculating') : t('decisionDetail.results.calculate')}
                 </button>
                 {(decision.votes?.length || 0) === 0 && (
-                  <p className="help-text">Необходимо минимум 1 голос для расчета результатов</p>
+                  <p className="help-text">{t('decisionDetail.results.needVotes')}</p>
                 )}
               </div>
               {results && <ResultsDisplay results={results} alternatives={decision.alternatives} />}
@@ -517,7 +534,7 @@ const DecisionDetail = () => {
           {activeTab === 'info' && (
             <div className="info-tab">
               <div className="info-card">
-                <h3>Варианты для выбора</h3>
+                <h3>{t('decisionDetail.info.alternatives')}</h3>
                 <div className="alternatives-list">
                   {decision.alternatives?.map((alt, index) => (
                     <div key={alt.id} className="alternative-info-item">
@@ -532,7 +549,7 @@ const DecisionDetail = () => {
               </div>
 
               <div className="info-card">
-                <h3>Голоса участников ({decision.votes?.length || 0})</h3>
+                <h3>{t('decisionDetail.info.votes')} ({decision.votes?.length || 0})</h3>
                 {decision.isBlindVoting && !decision.isCompleted && (
                   <div style={{
                     background: '#edf2f7', border: '1px solid #cbd5e0', borderRadius: '8px',
@@ -540,9 +557,9 @@ const DecisionDetail = () => {
                   }}>
                     <span style={{ fontSize: '24px' }}>🙈</span>
                     <div>
-                      <strong>Слепое голосование активно</strong>
+                      <strong>{t('decisionDetail.info.blindActive')}</strong>
                       <div style={{ fontSize: '13px', marginTop: '2px' }}>
-                        Голоса других участников скрыты до завершения голосования
+                        {t('decisionDetail.info.blindDesc')}
                       </div>
                     </div>
                   </div>
@@ -550,13 +567,13 @@ const DecisionDetail = () => {
                 {(!decision.isBlindVoting || decision.isCompleted) && (
                   <div className="votes-list">
                     {decision.votes?.length === 0 && (
-                      <p style={{ color: '#666' }}>Пока никто не проголосовал</p>
+                      <p style={{ color: '#666' }}>{t('decisionDetail.info.noVotes')}</p>
                     )}
                     {decision.votes?.map(vote => (
                       <div key={vote.id} className="vote-item">
                         <div className="vote-user">
-                          <strong>{decision.isAnonymous ? '🎭 Аноним' : vote.username}</strong>
-                          <span>{new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
+                          <strong>{decision.isAnonymous ? t('decisionDetail.pdf.anon') : vote.username}</strong>
+                          <span>{new Date(vote.createdAt).toLocaleDateString(dateLocale)}</span>
                         </div>
                         <div className="vote-rankings">
                           {vote.rankings
@@ -583,17 +600,17 @@ const DecisionDetail = () => {
           <h1>{decision.title}</h1>
           {decision.description && <p className="print-description">{decision.description}</p>}
           <div className="print-meta">
-            <span>Статус: {decision.status === 'Active' ? 'Активно' : decision.status === 'Completed' ? 'Завершено' : 'Отменено'}</span>
-            {decision.deadline && <span>Дедлайн: {new Date(decision.deadline).toLocaleString('ru-RU')}</span>}
-            {decision.isBlindVoting && <span>🙈 Слепое голосование</span>}
-            {decision.isAnonymous && <span>🎭 Анонимное</span>}
-            <span>Голосов: {decision.votes?.length || 0}</span>
-            <span>Создано: {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
+            <span>{language === 'ru' ? 'Статус' : 'Status'}: {decision.status === 'Active' ? t('decisionDetail.pdf.statusActive') : decision.status === 'Completed' ? t('decisionDetail.pdf.statusCompleted') : t('decisionDetail.pdf.statusCancelled')}</span>
+            {decision.deadline && <span>{t('decisionDetail.pdf.deadline')}: {new Date(decision.deadline).toLocaleString(dateLocale)}</span>}
+            {decision.isBlindVoting && <span>{t('decisionDetail.pdf.blind')}</span>}
+            {decision.isAnonymous && <span>{t('decisionDetail.pdf.anon')}</span>}
+            <span>{t('decisionDetail.pdf.votes')}: {decision.votes?.length || 0}</span>
+            <span>{t('decisionDetail.pdf.created')}: {new Date(decision.createdAt).toLocaleDateString(dateLocale)}</span>
           </div>
         </div>
 
         <div className="print-section">
-          <h2>Варианты для выбора ({decision.alternatives?.length || 0})</h2>
+          <h2>{t('decisionDetail.pdf.options')} ({decision.alternatives?.length || 0})</h2>
           {decision.alternatives?.map((alt, i) => (
             <div key={alt.id} className="print-alternative">
               <span className="print-alt-num">{i + 1}</span>
@@ -607,11 +624,11 @@ const DecisionDetail = () => {
 
         {(!decision.isBlindVoting || decision.isCompleted) && decision.votes?.length > 0 && (
           <div className="print-section">
-            <h2>Голоса участников ({decision.votes.length})</h2>
+            <h2>{t('decisionDetail.pdf.participantVotes')} ({decision.votes.length})</h2>
             {decision.votes.map(vote => (
               <div key={vote.id} className="print-vote">
-                <strong>{decision.isAnonymous ? '🎭 Аноним' : vote.username}</strong>
-                <span>{new Date(vote.createdAt).toLocaleDateString('ru-RU')}</span>
+                <strong>{decision.isAnonymous ? t('decisionDetail.pdf.anon') : vote.username}</strong>
+                <span>{new Date(vote.createdAt).toLocaleDateString(dateLocale)}</span>
                 <div className="print-rankings">
                   {vote.rankings
                     ?.sort((a, b) => a.rank - b.rank)
@@ -628,10 +645,10 @@ const DecisionDetail = () => {
 
         {results && (
           <div className="print-section">
-            <h2>Результаты голосования</h2>
+            <h2>{t('decisionDetail.pdf.results')}</h2>
             {results.winner && (
               <div className="print-winner">
-                🏆 Победитель: <strong>{decision.alternatives?.find(a => a.id === results.winner)?.name || results.winner}</strong>
+                🏆 <strong>{decision.alternatives?.find(a => a.id === results.winner)?.name || results.winner}</strong>
               </div>
             )}
             {results.methods && results.methods.map(m => (
@@ -643,7 +660,7 @@ const DecisionDetail = () => {
         )}
 
         <div className="print-footer">
-          Экспортировано: {new Date().toLocaleString('ru-RU')}
+          {t('decisionDetail.pdf.exported')}: {new Date().toLocaleString(dateLocale)}
         </div>
       </div>
 
@@ -652,34 +669,34 @@ const DecisionDetail = () => {
         <div className="modal" onClick={(e) => e.target.classList.contains('modal') && setShowEditModal(false)}>
           <div className="modal-content">
             <div className="modal-header">
-              <h2>✏️ Редактировать решение</h2>
+              <h2>{t('decisionDetail.edit.title')}</h2>
               <button className="modal-close" onClick={() => setShowEditModal(false)}>✕</button>
             </div>
 
             <div className="form-group">
-              <label>Название *</label>
+              <label>{t('decisionDetail.edit.nameLabel')}</label>
               <input
                 type="text"
                 className="form-control"
                 value={editData.title}
                 onChange={(e) => setEditData(d => ({ ...d, title: e.target.value }))}
-                placeholder="Название решения"
+                placeholder={t('decisionDetail.edit.nameLabel')}
               />
             </div>
 
             <div className="form-group">
-              <label>Описание</label>
+              <label>{t('decisionDetail.edit.descLabel')}</label>
               <textarea
                 className="form-control"
                 value={editData.description}
                 onChange={(e) => setEditData(d => ({ ...d, description: e.target.value }))}
-                placeholder="Описание"
+                placeholder={t('decisionDetail.edit.descLabel')}
                 rows="3"
               />
             </div>
 
             <div className="form-group">
-              <label>⚙️ Режим голосования</label>
+              <label>{t('decisionDetail.edit.votingMode')}</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                   <input
@@ -688,7 +705,7 @@ const DecisionDetail = () => {
                     onChange={(e) => setEditData(d => ({ ...d, isBlindVoting: e.target.checked }))}
                     style={{ width: '16px', height: '16px' }}
                   />
-                  <span><strong>🙈 Слепое голосование</strong> — участники не видят чужие голоса</span>
+                  <span><strong>{t('decisionDetail.edit.blind')}</strong> — {t('decisionDetail.edit.blindDesc')}</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                   <input
@@ -697,18 +714,18 @@ const DecisionDetail = () => {
                     onChange={(e) => setEditData(d => ({ ...d, isAnonymous: e.target.checked }))}
                     style={{ width: '16px', height: '16px' }}
                   />
-                  <span><strong>🎭 Анонимное голосование</strong> — имена участников скрыты</span>
+                  <span><strong>{t('decisionDetail.edit.anonymousLabel')}</strong> — {t('decisionDetail.edit.anonymousDesc')}</span>
                 </label>
               </div>
             </div>
 
             <div className="form-group">
-              <label>Варианты для выбора</label>
+              <label>{t('decisionDetail.edit.alternativesLabel')}</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
                 {editData.alternatives.map((alt, idx) => (
                   <div key={idx} style={{ background: '#f8f9fa', borderRadius: '10px', padding: '14px', border: '1px solid #e2e8f0' }}>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: '#667eea', marginBottom: '8px' }}>
-                      {alt.isNew ? '🆕 Новый вариант' : `Вариант ${idx + 1}`}
+                      {alt.isNew ? t('decisionDetail.edit.newOption') : t('decisionDetail.edit.optionLabel', { n: idx + 1 })}
                     </div>
                     <input
                       type="text"
@@ -719,7 +736,7 @@ const DecisionDetail = () => {
                         alts[idx] = { ...alts[idx], name: e.target.value };
                         setEditData(d => ({ ...d, alternatives: alts }));
                       }}
-                      placeholder="Название варианта"
+                      placeholder={t('decisionDetail.edit.namePlaceholder')}
                       style={{ marginBottom: '8px' }}
                     />
                     <textarea
@@ -730,7 +747,7 @@ const DecisionDetail = () => {
                         alts[idx] = { ...alts[idx], description: e.target.value };
                         setEditData(d => ({ ...d, alternatives: alts }));
                       }}
-                      placeholder="Описание (опционально)"
+                      placeholder={t('decisionDetail.edit.descPlaceholder')}
                       rows="2"
                     />
                   </div>
@@ -741,17 +758,17 @@ const DecisionDetail = () => {
                   onClick={() => setEditData(d => ({ ...d, alternatives: [...d.alternatives, { name: '', description: '', isNew: true }] }))}
                   style={{ width: '100%' }}
                 >
-                  + Добавить вариант
+                  {t('decisionDetail.edit.addOption')}
                 </button>
               </div>
             </div>
 
             <div className="modal-footer">
               <button className="btn btn-primary" onClick={handleSaveEdit} disabled={editSaving || !editData.title.trim()}>
-                {editSaving ? 'Сохранение...' : '💾 Сохранить'}
+                {editSaving ? t('decisionDetail.edit.saving') : t('decisionDetail.edit.save')}
               </button>
               <button className="btn btn-secondary" onClick={() => setShowEditModal(false)} disabled={editSaving}>
-                Отмена
+                {t('decisionDetail.edit.cancel')}
               </button>
             </div>
           </div>

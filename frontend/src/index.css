@@ -579,3 +579,43 @@ textarea.form-control {
   background: #2d3748;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
+
+/* ============================================
+   LANGUAGE SWITCHER BUTTON
+   ============================================ */
+.lang-switcher {
+  position: fixed;
+  bottom: 92px;
+  right: 28px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.25s ease;
+  color: #2d3748;
+}
+
+.lang-switcher:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.lang-switcher:active {
+  transform: scale(0.95);
+}
+
+[data-theme="dark"] .lang-switcher {
+  background: #2d3748;
+  color: #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}

@@ -2,7 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
+import { useLanguage } from './context/LanguageContext';
 import ThemeToggle from './components/ThemeToggle';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -17,21 +20,23 @@ import Navbar from './components/Navbar';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  
+  const { t } = useLanguage();
+
   if (loading) {
-    return <div className="loading">Загрузка...</div>;
+    return <div className="loading">{t('common.loading')}</div>;
   }
-  
+
   return user ? children : <Navigate to="/login" />;
 };
 
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  
+  const { t } = useLanguage();
+
   if (loading) {
-    return <div className="loading">Загрузка...</div>;
+    return <div className="loading">{t('common.loading')}</div>;
   }
-  
+
   return !user ? children : <Navigate to="/dashboard" />;
 };
 
@@ -104,12 +109,15 @@ function AppRoutes() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AppRoutes />
-        <ThemeToggle />
-      </AuthProvider>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </AuthProvider>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
 

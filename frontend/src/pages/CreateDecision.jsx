@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { decisionsAPI } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import './CreateDecision.css';
 
 const CreateDecision = () => {
@@ -8,6 +9,7 @@ const CreateDecision = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const prefill = location.state?.prefill;
+  const { t } = useLanguage();
 
   const [title, setTitle] = useState(prefill?.title || '');
   const [description, setDescription] = useState(prefill?.description || '');
@@ -39,7 +41,7 @@ const CreateDecision = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const deadline = new Date();
       const totalSeconds = (parseInt(minutes) * 60) + parseInt(seconds);
@@ -72,48 +74,47 @@ const CreateDecision = () => {
       navigate(`/decisions/${decisionId}`);
     } catch (error) {
       console.error('Error creating decision:', error);
-      alert('Ошибка создания решения');
+      alert(t('createDecision.errorCreating'));
     }
   };
 
   return (
     <div className="container create-decision">
       <div className="page-card">
-        <h1>{prefill ? '🔄 Повторить решение' : 'Создать новое решение'}</h1>
+        <h1>{prefill ? t('createDecision.repeatTitle') : t('createDecision.title')}</h1>
         {prefill && (
           <p style={{ color: '#718096', marginBottom: '24px', marginTop: '-16px' }}>
-            Данные скопированы из предыдущего решения — измените нужное и запустите заново.
+            {t('createDecision.repeatDesc')}
           </p>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Название решения *</label>
+            <label>{t('createDecision.nameLabel')}</label>
             <input
               type="text"
               className="form-control"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              placeholder="Например: Выбор места для корпоратива"
+              placeholder={t('createDecision.namePlaceholder')}
             />
           </div>
 
           <div className="form-group">
-            <label>Описание</label>
+            <label>{t('createDecision.descLabel')}</label>
             <textarea
               className="form-control"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Опишите контекст и критерии выбора"
+              placeholder={t('createDecision.descPlaceholder')}
               rows="3"
             />
           </div>
 
           <div className="form-group">
-            <label>⏱️ Длительность голосования *</label>
-            
-            {/* Кастомный ввод времени */}
+            <label>{t('createDecision.durationLabel')}</label>
+
             <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <input
@@ -127,9 +128,9 @@ const CreateDecision = () => {
                   style={{ width: '100px' }}
                   placeholder="0"
                 />
-                <span style={{ fontWeight: 'bold' }}>минут</span>
+                <span style={{ fontWeight: 'bold' }}>{t('createDecision.minutes')}</span>
               </div>
-              
+
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <input
                   type="number"
@@ -141,69 +142,70 @@ const CreateDecision = () => {
                   style={{ width: '100px' }}
                   placeholder="0"
                 />
-                <span style={{ fontWeight: 'bold' }}>секунд</span>
+                <span style={{ fontWeight: 'bold' }}>{t('createDecision.seconds')}</span>
               </div>
             </div>
 
-            {/* Быстрые кнопки */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-sm btn-secondary"
                 onClick={() => { setMinutes(1); setSeconds(0); }}
                 style={{ padding: '6px 12px', fontSize: '13px' }}
               >
-                1 мин
+                {t('createDecision.min1')}
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-sm btn-secondary"
                 onClick={() => { setMinutes(3); setSeconds(0); }}
                 style={{ padding: '6px 12px', fontSize: '13px' }}
               >
-                3 мин
+                {t('createDecision.min3')}
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-sm btn-secondary"
                 onClick={() => { setMinutes(5); setSeconds(0); }}
                 style={{ padding: '6px 12px', fontSize: '13px' }}
               >
-                5 мин
+                {t('createDecision.min5')}
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-sm btn-secondary"
                 onClick={() => { setMinutes(10); setSeconds(0); }}
                 style={{ padding: '6px 12px', fontSize: '13px' }}
               >
-                10 мин
+                {t('createDecision.min10')}
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-sm btn-secondary"
                 onClick={() => { setMinutes(60); setSeconds(0); }}
                 style={{ padding: '6px 12px', fontSize: '13px' }}
               >
-                1 час
+                {t('createDecision.hour1')}
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-sm btn-secondary"
                 onClick={() => { setMinutes(1440); setSeconds(0); }}
                 style={{ padding: '6px 12px', fontSize: '13px' }}
               >
-                1 день
+                {t('createDecision.day1')}
               </button>
             </div>
 
-            <p className="help-text" style={{ marginTop: '10px', color: '#666' }}>
-              💡 Введите любое время, например: <strong>3 минуты 17 секунд</strong>
-            </p>
+            <p
+              className="help-text"
+              style={{ marginTop: '10px', color: '#666' }}
+              dangerouslySetInnerHTML={{ __html: t('createDecision.durationHint') }}
+            />
           </div>
 
           <div className="form-group">
-            <label>⚙️ Режим голосования</label>
+            <label>{t('createDecision.votingMode')}</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
                 <input
@@ -213,9 +215,9 @@ const CreateDecision = () => {
                   style={{ marginTop: '3px', width: '16px', height: '16px', cursor: 'pointer' }}
                 />
                 <div>
-                  <div style={{ fontWeight: 600 }}>🙈 Слепое голосование</div>
+                  <div style={{ fontWeight: 600 }}>{t('createDecision.blindVoting')}</div>
                   <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>
-                    Участники не видят чужие голоса во время голосования — исключает эффект толпы
+                    {t('createDecision.blindVotingDesc')}
                   </div>
                 </div>
               </label>
@@ -227,9 +229,9 @@ const CreateDecision = () => {
                   style={{ marginTop: '3px', width: '16px', height: '16px', cursor: 'pointer' }}
                 />
                 <div>
-                  <div style={{ fontWeight: 600 }}>🎭 Анонимное голосование</div>
+                  <div style={{ fontWeight: 600 }}>{t('createDecision.anonymous')}</div>
                   <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>
-                    Имена участников скрыты — никто не видит, кто за что проголосовал
+                    {t('createDecision.anonymousDesc')}
                   </div>
                 </div>
               </label>
@@ -237,70 +239,70 @@ const CreateDecision = () => {
           </div>
 
           <div className="alternatives-section">
-            <h3>Варианты для выбора</h3>
-            <p className="section-description">Добавьте минимум 2 варианта</p>
-            
+            <h3>{t('createDecision.alternativesTitle')}</h3>
+            <p className="section-description">{t('createDecision.alternativesMinHint')}</p>
+
             {alternatives.map((alt, index) => (
               <div key={index} className="alternative-card">
                 <div className="alternative-header">
-                  <h4>Вариант {index + 1}</h4>
+                  <h4>{t('createDecision.option', { n: index + 1 })}</h4>
                   {alternatives.length > 2 && (
                     <button
                       type="button"
                       className="btn-icon"
                       onClick={() => removeAlternative(index)}
-                      title="Удалить вариант"
+                      title={t('createDecision.removeOption')}
                     >
                       ❌
                     </button>
                   )}
                 </div>
-                
+
                 <div className="form-group">
-                  <label>Название *</label>
+                  <label>{t('createDecision.optionName')}</label>
                   <input
                     type="text"
                     className="form-control"
                     value={alt.name}
                     onChange={(e) => updateAlternative(index, 'name', e.target.value)}
                     required
-                    placeholder={`Например: Ресторан "Пушкин"`}
+                    placeholder={t('createDecision.optionNamePlaceholder')}
                   />
                 </div>
-                
+
                 <div className="form-group">
-                  <label>Описание (опционально)</label>
+                  <label>{t('createDecision.optionDesc')}</label>
                   <textarea
                     className="form-control"
                     value={alt.description}
                     onChange={(e) => updateAlternative(index, 'description', e.target.value)}
-                    placeholder="Дополнительные детали"
+                    placeholder={t('createDecision.optionDescPlaceholder')}
                     rows="2"
                   />
                 </div>
               </div>
             ))}
-            
+
             <button
               type="button"
               className="btn btn-secondary"
               onClick={addAlternative}
               style={{ width: '100%', marginTop: '10px' }}
             >
-              + Добавить вариант
+              {t('createDecision.addOption')}
             </button>
           </div>
 
           <div className="form-actions">
             <button type="submit" className="btn btn-primary btn-lg">
-              Создать решение
+              {t('createDecision.submit')}
             </button>
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="btn btn-secondary"
               onClick={() => navigate(`/groups/${groupId}`)}
             >
-              Отмена
+              {t('createDecision.cancel')}
             </button>
           </div>
         </form>

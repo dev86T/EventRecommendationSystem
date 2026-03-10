@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { groupsAPI, decisionsAPI, usersAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import './GroupDetail.css';
 
 const getAnimalAvatar = (email) => {
-  const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', 
+  const animals = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
                    '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
                    '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌'];
-  
+
   let hash = 0;
   for (let i = 0; i < email.length; i++) {
     hash = ((hash << 5) - hash) + email.charCodeAt(i);
@@ -21,6 +22,10 @@ const GroupDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, language } = useLanguage();
+
+  const dateLocale = { en: 'en-US', de: 'de-DE', ru: 'ru-RU' }[language] || 'en-US';
+
   const [group, setGroup] = useState(null);
   const [decisions, setDecisions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,18 +46,22 @@ const GroupDetail = () => {
     loadData();
   }, [id]);
 
-  useEffect(() => {
-    const formatTime = (diff) => {
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      if (days > 0) return `${days}д ${hours}ч ${minutes}м`;
-      if (hours > 0) return `${hours}ч ${minutes}м ${seconds}с`;
-      if (minutes > 0) return `${minutes}м ${seconds}с`;
-      return `${seconds}с`;
-    };
+  const formatTime = (diff) => {
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    const d = t('groupDetail.timeSuffixes.days');
+    const h = t('groupDetail.timeSuffixes.hours');
+    const m = t('groupDetail.timeSuffixes.minutes');
+    const s = t('groupDetail.timeSuffixes.seconds');
+    if (days > 0) return `${days}${d} ${hours}${h} ${minutes}${m}`;
+    if (hours > 0) return `${hours}${h} ${minutes}${m} ${seconds}${s}`;
+    if (minutes > 0) return `${minutes}${m} ${seconds}${s}`;
+    return `${seconds}${s}`;
+  };
 
+  useEffect(() => {
     const updateTimers = () => {
       const now = new Date();
       const updated = {};
@@ -70,7 +79,7 @@ const GroupDetail = () => {
     updateTimers();
     const interval = setInterval(updateTimers, 1000);
     return () => clearInterval(interval);
-  }, [decisions]);
+  }, [decisions, language]);
 
   const loadData = async () => {
     try {
@@ -91,7 +100,7 @@ const GroupDetail = () => {
   const handleSearchUser = async () => {
     const code = userCodeInput.trim().toUpperCase();
     if (code.length !== 5) {
-      setSearchError('Код должен содержать 5 символов');
+      setSearchError(t('groupDetail.addMemberModal.codeTooShort'));
       setFoundUser(null);
       return;
     }
@@ -103,9 +112,9 @@ const GroupDetail = () => {
       setFoundUser(res.data);
     } catch (error) {
       if (error.response?.status === 404) {
-        setSearchError('Пользователь с таким кодом не найден');
+        setSearchError(t('groupDetail.addMemberModal.userNotFound'));
       } else {
-        setSearchError('Ошибка поиска');
+        setSearchError(t('groupDetail.addMemberModal.searchError'));
       }
     } finally {
       setSearching(false);
@@ -123,19 +132,19 @@ const GroupDetail = () => {
       setSearchError('');
       loadData();
     } catch (error) {
-      const msg = error.response?.data?.message || 'Ошибка добавления участника';
+      const msg = error.response?.data?.message || t('groupDetail.errorAddingMember');
       setSearchError(msg);
     }
   };
 
   const handleRemoveMember = async (memberId, memberUsername) => {
-    if (!window.confirm(`Удалить участника "${memberUsername}" из группы?`)) return;
+    if (!window.confirm(t('groupDetail.confirmRemoveMember', { username: memberUsername }))) return;
     try {
       setRemovingMember(memberId);
       await groupsAPI.removeMember(id, memberId);
       loadData();
     } catch (error) {
-      alert(error.response?.data?.message || 'Ошибка удаления участника');
+      alert(error.response?.data?.message || t('groupDetail.errorRemovingMember'));
     } finally {
       setRemovingMember(null);
     }
@@ -145,30 +154,30 @@ const GroupDetail = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!window.confirm(`Вы уверены, что хотите удалить решение "${decisionTitle}"?`)) {
+    if (!window.confirm(t('groupDetail.confirmDeleteDecision', { title: decisionTitle }))) {
       return;
     }
 
     try {
       setDeletingDecision(decisionId);
       await decisionsAPI.deleteDecision(decisionId);
-      alert('Решение успешно удалено');
+      alert(t('groupDetail.decisionDeleted'));
       loadData();
     } catch (error) {
       console.error('Error deleting decision:', error);
-      alert(error.response?.data?.message || 'Ошибка удаления решения');
+      alert(error.response?.data?.message || t('groupDetail.errorDeletingDecision'));
     } finally {
       setDeletingDecision(null);
     }
   };
 
   const handleDeleteGroup = async () => {
-    if (!window.confirm(`Вы уверены, что хотите удалить группу "${group.name}"? Это действие необратимо.`)) return;
+    if (!window.confirm(t('groupDetail.confirmDeleteGroup', { name: group.name }))) return;
     try {
       await groupsAPI.deleteGroup(id);
       navigate('/groups');
     } catch (error) {
-      alert(error.response?.data?.message || 'Ошибка удаления группы');
+      alert(error.response?.data?.message || t('groupDetail.errorDeletingGroup'));
     }
   };
 
@@ -186,28 +195,28 @@ const GroupDetail = () => {
       setShowEditGroupModal(false);
       loadData();
     } catch (error) {
-      alert(error.response?.data?.message || 'Ошибка сохранения');
+      alert(error.response?.data?.message || t('common.error'));
     } finally {
       setSavingGroup(false);
     }
   };
 
   if (loading) {
-    return <div className="loading">Загрузка...</div>;
+    return <div className="loading">{t('common.loading')}</div>;
   }
 
   if (!group) {
-    return <div className="container">Группа не найдена</div>;
+    return <div className="container">{t('groupDetail.groupNotFound')}</div>;
   }
 
-  // Проверяем, является ли пользователь создателем или админом
+  // Check if the user is creator or admin
   const isCreator = group.creatorId === user?.id || String(group.creatorId) === String(user?.id);
-  
-  // Проверяем, является ли пользователь админом группы
+
+  // Check if the user is a group admin
   const currentMember = group.members.find(m => m.userId === user?.id || String(m.userId) === String(user?.id));
   const isAdmin = currentMember?.isAdmin || false;
-  
-  // Может удалять: создатель ИЛИ админ
+
+  // Can delete: creator OR admin
   const canDelete = isCreator || isAdmin;
 
   console.log('[GROUP DETAIL] Permissions check:', {
@@ -229,7 +238,7 @@ const GroupDetail = () => {
               <button
                 className="btn-icon-subtle"
                 onClick={handleOpenEditGroup}
-                title="Редактировать группу"
+                title={t('groupDetail.editGroup')}
               >
                 ✏️
               </button>
@@ -237,20 +246,20 @@ const GroupDetail = () => {
           </div>
           <p className="group-subtitle">{group.description}</p>
           <div className="group-meta-info">
-            <span>Создатель: {group.creator.username}</span>
-            <span>Участников: {group.members.length}</span>
-            <span>Создано: {new Date(group.createdAt).toLocaleDateString('ru-RU')}</span>
+            <span>{t('groupDetail.creatorLabel')}: {group.creator.username}</span>
+            <span>{t('groupDetail.membersLabel')}: {group.members.length}</span>
+            <span>{t('groupDetail.createdLabel')}: {new Date(group.createdAt).toLocaleDateString(dateLocale)}</span>
           </div>
         </div>
         <div className="group-actions">
           <button className="btn btn-secondary" onClick={() => setShowAddMemberModal(true)}>
-            + Добавить участника
+            {t('groupDetail.addMember')}
           </button>
           <Link to={`/groups/${id}/decisions/new`} className="btn btn-primary">
-            + Создать решение
+            {t('groupDetail.createDecision')}
           </Link>
           {isCreator && (
-            <button className="btn-icon-subtle btn-icon-danger" onClick={handleDeleteGroup} title="Удалить группу">
+            <button className="btn-icon-subtle btn-icon-danger" onClick={handleDeleteGroup} title={t('groupDetail.deleteGroup')}>
               🗑️
             </button>
           )}
@@ -260,10 +269,10 @@ const GroupDetail = () => {
       {showAddMemberModal && (
         <div className="modal">
           <div className="modal-content">
-            <h2>Добавить участника</h2>
+            <h2>{t('groupDetail.addMemberModal.title')}</h2>
             <form onSubmit={handleAddMember}>
               <div className="form-group">
-                <label>Уникальный код пользователя</label>
+                <label>{t('groupDetail.addMemberModal.codeLabel')}</label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                     type="text"
@@ -273,7 +282,7 @@ const GroupDetail = () => {
                       setFoundUser(null);
                       setSearchError('');
                     }}
-                    placeholder="Например: AB3X7"
+                    placeholder={t('groupDetail.addMemberModal.codePlaceholder')}
                     maxLength={5}
                     className="form-control"
                     style={{ fontFamily: 'monospace', letterSpacing: '2px', textTransform: 'uppercase' }}
@@ -284,7 +293,7 @@ const GroupDetail = () => {
                     onClick={handleSearchUser}
                     disabled={searching}
                   >
-                    {searching ? '...' : 'Найти'}
+                    {searching ? '...' : t('groupDetail.addMemberModal.find')}
                   </button>
                 </div>
               </div>
@@ -309,7 +318,7 @@ const GroupDetail = () => {
                   <span style={{ fontSize: '24px' }}>✅</span>
                   <div>
                     <div style={{ fontWeight: 600 }}>{foundUser.username}</div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>код: {foundUser.userCode}</div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>{t('common.code')}: {foundUser.userCode}</div>
                   </div>
                 </div>
               )}
@@ -320,7 +329,7 @@ const GroupDetail = () => {
                   className="btn btn-primary"
                   disabled={!foundUser}
                 >
-                  Добавить
+                  {t('groupDetail.addMemberModal.add')}
                 </button>
                 <button
                   type="button"
@@ -332,7 +341,7 @@ const GroupDetail = () => {
                     setSearchError('');
                   }}
                 >
-                  Отмена
+                  {t('groupDetail.addMemberModal.cancel')}
                 </button>
               </div>
             </form>
@@ -344,12 +353,12 @@ const GroupDetail = () => {
         <div className="modal">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Редактировать группу</h2>
+              <h2>{t('groupDetail.editGroupModal.title')}</h2>
               <button className="modal-close" onClick={() => setShowEditGroupModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSaveGroup}>
               <div className="form-group">
-                <label>Название группы *</label>
+                <label>{t('groupDetail.editGroupModal.nameLabel')}</label>
                 <input
                   type="text"
                   className="form-control"
@@ -360,7 +369,7 @@ const GroupDetail = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Описание</label>
+                <label>{t('groupDetail.editGroupModal.descLabel')}</label>
                 <textarea
                   className="form-control"
                   value={editGroupDescription}
@@ -371,10 +380,10 @@ const GroupDetail = () => {
               </div>
               <div className="modal-footer">
                 <button type="submit" className="btn btn-primary" disabled={savingGroup}>
-                  {savingGroup ? 'Сохраняем...' : 'Сохранить'}
+                  {savingGroup ? t('groupDetail.editGroupModal.saving') : t('groupDetail.editGroupModal.save')}
                 </button>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowEditGroupModal(false)}>
-                  Отмена
+                  {t('groupDetail.editGroupModal.cancel')}
                 </button>
               </div>
             </form>
@@ -384,7 +393,7 @@ const GroupDetail = () => {
 
       <div className="group-content">
         <div className="members-section">
-          <h2>Участники</h2>
+          <h2>{t('groupDetail.membersSection')}</h2>
           <div className="members-list">
             {group.members.map(member => {
               const isThisCreator = String(member.userId) === String(group.creatorId);
@@ -397,14 +406,14 @@ const GroupDetail = () => {
                   <div className="member-info">
                     <div className="member-name">{member.user.username}</div>
                   </div>
-                  {isThisCreator && <span className="badge badge-warning">Создатель</span>}
-                  {!isThisCreator && member.isAdmin && <span className="badge badge-primary">Админ</span>}
+                  {isThisCreator && <span className="badge badge-warning">{t('common.creator')}</span>}
+                  {!isThisCreator && member.isAdmin && <span className="badge badge-primary">{t('common.admin')}</span>}
                   {canRemove && (
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => handleRemoveMember(member.userId, member.user.username)}
                       disabled={removingMember === member.userId}
-                      title="Удалить из группы"
+                      title={t('common.delete')}
                       style={{ marginLeft: 'auto' }}
                     >
                       {removingMember === member.userId ? '⏳' : '✕'}
@@ -417,42 +426,42 @@ const GroupDetail = () => {
         </div>
 
         <div className="decisions-section">
-          <h2>Решения группы</h2>
+          <h2>{t('groupDetail.decisionsSection')}</h2>
           {decisions.length === 0 ? (
             <div className="empty-decisions">
-              <p>Решений пока нет</p>
+              <p>{t('groupDetail.noDecisions')}</p>
               <Link to={`/groups/${id}/decisions/new`} className="btn btn-primary">
-                Создать первое решение
+                {t('groupDetail.createFirst')}
               </Link>
             </div>
           ) : (
             <div className="decisions-list">
               {decisions.map(decision => {
-                const realStatus = typeof decision.status === 'string' ? decision.status : 
+                const realStatus = typeof decision.status === 'string' ? decision.status :
                   decision.status === 0 ? 'Active' :
                   decision.status === 1 ? 'Completed' : 'Cancelled';
 
                 return (
                   <div key={decision.id} className="card decision-card" style={{ position: 'relative' }}>
-                    <Link 
+                    <Link
                       to={`/decisions/${decision.id}`}
                       style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
                     >
                       <div className="decision-header">
                         <h3>{decision.title}</h3>
                         <span className={`badge ${
-                          realStatus === 'Active' ? 'badge-success' : 
+                          realStatus === 'Active' ? 'badge-success' :
                           realStatus === 'Completed' ? 'badge-primary' : 'badge-danger'
                         }`}>
-                          {realStatus === 'Active' ? '✅ Активно' : 
-                           realStatus === 'Completed' ? '🏁 Завершено' : '❌ Отменено'}
+                          {realStatus === 'Active' ? t('groupDetail.statusActive') :
+                           realStatus === 'Completed' ? t('groupDetail.statusCompleted') : t('groupDetail.statusCancelled')}
                         </span>
                       </div>
                       <p>{decision.description}</p>
                       <div className="decision-stats">
-                        <span>📋 {decision.alternativesCount} вариантов</span>
-                        <span>🗳️ {decision.votesCount} голосов</span>
-                        <span>📅 {new Date(decision.createdAt).toLocaleDateString('ru-RU')}</span>
+                        <span>📋 {decision.alternativesCount} {t('groupDetail.alternatives')}</span>
+                        <span>🗳️ {decision.votesCount} {t('groupDetail.voted')}</span>
+                        <span>📅 {new Date(decision.createdAt).toLocaleDateString(dateLocale)}</span>
                       </div>
                       {realStatus === 'Active' && timers[decision.id] && (
                         <div className="decision-deadline-timer">
@@ -462,7 +471,7 @@ const GroupDetail = () => {
                       {group && group.members && (
                         <div className="vote-progress-wrapper">
                           <div className="vote-progress-label">
-                            {decision.votesCount}/{group.members.length} проголосовали
+                            {decision.votesCount}/{group.members.length} {t('groupDetail.voted')}
                           </div>
                           <div className="vote-progress-bar">
                             <div
@@ -477,7 +486,7 @@ const GroupDetail = () => {
                         </div>
                       )}
                     </Link>
-                    
+
                     {canDelete && (
                       <button
                         className="btn btn-danger btn-sm"
@@ -486,13 +495,13 @@ const GroupDetail = () => {
                         style={{
                           position: 'absolute',
                           top: '10px',
-                          right: '150px',  // Сдвинули влево от бейджа статуса
+                          right: '150px',
                           padding: '8px 12px',
                           fontSize: '16px',
                           zIndex: 10,
                           boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                         }}
-                        title="Удалить решение"
+                        title={t('common.delete')}
                       >
                         {deletingDecision === decision.id ? '⏳' : '🗑️'}
                       </button>

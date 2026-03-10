@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { profileAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import './Profile.css';
 
 const ANIMAL_EMOJIS = [
@@ -11,6 +12,7 @@ const ANIMAL_EMOJIS = [
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
+  const { t } = useLanguage();
 
   // Profile data
   const [avatarEmoji, setAvatarEmoji] = useState(user?.avatarEmoji || '🐱');
@@ -47,9 +49,9 @@ const Profile = () => {
     try {
       const res = await profileAPI.updateProfile({ username, avatarEmoji });
       updateUser({ username: res.data.username, avatarEmoji: res.data.avatarEmoji });
-      setProfileMsg({ type: 'success', text: 'Профиль обновлён!' });
+      setProfileMsg({ type: 'success', text: t('profile.profileUpdated') });
     } catch (err) {
-      setProfileMsg({ type: 'error', text: err.response?.data?.message || 'Ошибка сохранения' });
+      setProfileMsg({ type: 'error', text: err.response?.data?.message || t('profile.errorSaving') });
     } finally {
       setProfileLoading(false);
     }
@@ -58,23 +60,23 @@ const Profile = () => {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setPasswordMsg({ type: 'error', text: 'Пароли не совпадают' });
+      setPasswordMsg({ type: 'error', text: t('profile.passwordsMismatch') });
       return;
     }
     if (newPassword === oldPassword) {
-      setPasswordMsg({ type: 'error', text: 'Новый пароль должен отличаться от текущего' });
+      setPasswordMsg({ type: 'error', text: t('profile.newPasswordSameAsOld') });
       return;
     }
     setPasswordLoading(true);
     setPasswordMsg(null);
     try {
       await profileAPI.changePassword({ oldPassword, newPassword });
-      setPasswordMsg({ type: 'success', text: 'Пароль успешно изменён!' });
+      setPasswordMsg({ type: 'success', text: t('profile.passwordChanged') });
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setPasswordMsg({ type: 'error', text: err.response?.data?.message || 'Ошибка смены пароля' });
+      setPasswordMsg({ type: 'error', text: err.response?.data?.message || t('profile.errorChangingPassword') });
     } finally {
       setPasswordLoading(false);
     }
@@ -87,9 +89,9 @@ const Profile = () => {
     try {
       await profileAPI.requestEmailChange({ newEmail });
       setEmailStep('confirm');
-      setEmailMsg({ type: 'success', text: 'Код отправлен на новую почту. Проверьте входящие.' });
+      setEmailMsg({ type: 'success', text: t('profile.codeSent') });
     } catch (err) {
-      setEmailMsg({ type: 'error', text: err.response?.data?.message || 'Ошибка запроса' });
+      setEmailMsg({ type: 'error', text: err.response?.data?.message || t('profile.errorRequestingEmailChange') });
     } finally {
       setEmailLoading(false);
     }
@@ -102,12 +104,12 @@ const Profile = () => {
     try {
       const res = await profileAPI.confirmEmailChange({ code: emailCode });
       updateUser({ email: res.data.email });
-      setEmailMsg({ type: 'success', text: 'Почта успешно изменена!' });
+      setEmailMsg({ type: 'success', text: t('profile.emailChanged') });
       setEmailStep('input');
       setNewEmail('');
       setEmailCode('');
     } catch (err) {
-      setEmailMsg({ type: 'error', text: err.response?.data?.message || 'Ошибка подтверждения' });
+      setEmailMsg({ type: 'error', text: err.response?.data?.message || t('profile.errorConfirmingEmail') });
     } finally {
       setEmailLoading(false);
     }
@@ -123,7 +125,7 @@ const Profile = () => {
           <div className="profile-email">{user?.email}</div>
           {user?.userCode && (
             <div className="profile-code-badge">
-              <span>Мой код:</span>
+              <span>{t('profile.myCode')}:</span>
               <strong>{user.userCode}</strong>
             </div>
           )}
@@ -132,10 +134,10 @@ const Profile = () => {
 
       {/* Section: Username + Avatar */}
       <div className="profile-section-card">
-        <h2>Основные данные</h2>
+        <h2>{t('profile.basicInfo')}</h2>
         <form onSubmit={handleSaveProfile}>
           <div className="form-group">
-            <label>Имя пользователя</label>
+            <label>{t('profile.username')}</label>
             <input
               type="text"
               className="form-control"
@@ -148,7 +150,7 @@ const Profile = () => {
           </div>
 
           <div className="form-group">
-            <label>Выбор аватара</label>
+            <label>{t('profile.chooseAvatar')}</label>
             <div className="avatar-grid">
               {ANIMAL_EMOJIS.map(emoji => (
                 <button
@@ -171,17 +173,17 @@ const Profile = () => {
           )}
 
           <button type="submit" className="btn btn-primary" disabled={profileLoading}>
-            {profileLoading ? 'Сохраняем...' : 'Сохранить'}
+            {profileLoading ? t('profile.saving') : t('profile.save')}
           </button>
         </form>
       </div>
 
       {/* Section: Change Password */}
       <div className="profile-section-card">
-        <h2>Смена пароля</h2>
+        <h2>{t('profile.changePassword')}</h2>
         <form onSubmit={handleChangePassword}>
           <div className="form-group">
-            <label>Текущий пароль</label>
+            <label>{t('profile.currentPassword')}</label>
             <input
               type="password"
               className="form-control"
@@ -192,7 +194,7 @@ const Profile = () => {
             />
           </div>
           <div className="form-group">
-            <label>Новый пароль</label>
+            <label>{t('profile.newPassword')}</label>
             <input
               type="password"
               className="form-control"
@@ -204,7 +206,7 @@ const Profile = () => {
             />
           </div>
           <div className="form-group">
-            <label>Подтверждение нового пароля</label>
+            <label>{t('profile.confirmNewPassword')}</label>
             <input
               type="password"
               className="form-control"
@@ -222,27 +224,27 @@ const Profile = () => {
           )}
 
           <button type="submit" className="btn btn-primary" disabled={passwordLoading}>
-            {passwordLoading ? 'Меняем...' : 'Изменить пароль'}
+            {passwordLoading ? t('profile.changing') : t('profile.changePasswordBtn')}
           </button>
         </form>
       </div>
 
       {/* Section: Change Email */}
       <div className="profile-section-card">
-        <h2>Смена почты</h2>
-        <p className="profile-section-desc">Текущая почта: <strong>{user?.email}</strong></p>
+        <h2>{t('profile.changeEmail')}</h2>
+        <p className="profile-section-desc">{t('profile.currentEmail')}: <strong>{user?.email}</strong></p>
 
         {emailStep === 'input' ? (
           <form onSubmit={handleRequestEmailChange}>
             <div className="form-group">
-              <label>Новая почта</label>
+              <label>{t('profile.newEmail')}</label>
               <input
                 type="email"
                 className="form-control"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 required
-                placeholder="новый@email.com"
+                placeholder={t('profile.newEmailPlaceholder')}
               />
             </div>
 
@@ -253,14 +255,14 @@ const Profile = () => {
             )}
 
             <button type="submit" className="btn btn-primary" disabled={emailLoading}>
-              {emailLoading ? 'Отправляем...' : 'Отправить код'}
+              {emailLoading ? t('profile.sending') : t('profile.sendCode')}
             </button>
           </form>
         ) : (
           <form onSubmit={handleConfirmEmailChange}>
-            <p className="profile-section-desc">Введите код, отправленный на <strong>{newEmail}</strong>.</p>
+            <p className="profile-section-desc">{t('profile.enterCode')} <strong>{newEmail}</strong>.</p>
             <div className="form-group">
-              <label>Код подтверждения</label>
+              <label>{t('profile.confirmationCode')}</label>
               <input
                 type="text"
                 className="form-control"
@@ -281,14 +283,14 @@ const Profile = () => {
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button type="submit" className="btn btn-primary" disabled={emailLoading}>
-                {emailLoading ? 'Подтверждаем...' : 'Подтвердить'}
+                {emailLoading ? t('profile.confirming') : t('profile.confirmEmail')}
               </button>
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => { setEmailStep('input'); setEmailMsg(null); setEmailCode(''); }}
               >
-                Назад
+                {t('profile.back')}
               </button>
             </div>
           </form>

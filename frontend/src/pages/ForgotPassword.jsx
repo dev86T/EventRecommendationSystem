@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useLanguage } from '../context/LanguageContext';
 import './Auth.css';
 
 const ForgotPassword = () => {
-  const [step, setStep] = useState(1); // 1 = email, 2 = код и новый пароль
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -12,6 +13,7 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
   const handleRequestCode = async (e) => {
     e.preventDefault();
@@ -20,17 +22,13 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
-        email
-      });
-
+      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
       console.log('[FORGOT PASSWORD] Ответ:', response.data);
-
-      setSuccess('Код восстановления отправлен на ваш email! Проверьте почту (включая спам).');
+      setSuccess(t('forgotPassword.codeSent'));
       setStep(2);
     } catch (err) {
       console.error('[FORGOT PASSWORD ERROR]', err);
-      setError(err.response?.data?.message || 'Ошибка при отправке кода');
+      setError(err.response?.data?.message || t('forgotPassword.sendCodeError'));
     } finally {
       setLoading(false);
     }
@@ -42,12 +40,12 @@ const ForgotPassword = () => {
     setSuccess('');
 
     if (newPassword !== confirmPassword) {
-      setError('Пароли не совпадают');
+      setError(t('forgotPassword.passwordsMismatch'));
       return;
     }
 
     if (newPassword.length < 6) {
-      setError('Пароль должен быть минимум 6 символов');
+      setError(t('forgotPassword.passwordTooShort'));
       return;
     }
 
@@ -60,15 +58,11 @@ const ForgotPassword = () => {
         newPassword
       });
 
-      setSuccess('Пароль успешно изменен! Теперь вы можете войти.');
-      
-      // Через 2 секунды редирект на логин
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 2000);
+      setSuccess(t('forgotPassword.passwordChanged'));
+      setTimeout(() => { window.location.href = '/login'; }, 2000);
     } catch (err) {
       console.error('[RESET PASSWORD ERROR]', err);
-      setError(err.response?.data?.message || 'Ошибка при сбросе пароля');
+      setError(err.response?.data?.message || t('forgotPassword.resetPasswordError'));
     } finally {
       setLoading(false);
     }
@@ -77,16 +71,14 @@ const ForgotPassword = () => {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-title">Восстановление пароля</h1>
+        <h1 className="auth-title">{t('forgotPassword.title')}</h1>
         <p className="auth-subtitle">
-          {step === 1 
-            ? 'Введите email для получения кода восстановления' 
-            : 'Введите код и новый пароль'}
+          {step === 1 ? t('forgotPassword.step1Subtitle') : t('forgotPassword.step2Subtitle')}
         </p>
-        
+
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
-        
+
         {step === 1 ? (
           <form onSubmit={handleRequestCode}>
             <div className="form-group">
@@ -100,23 +92,23 @@ const ForgotPassword = () => {
                 placeholder="your@email.com"
               />
             </div>
-            
-            <button 
-              type="submit" 
+
+            <button
+              type="submit"
               className="btn btn-primary btn-block"
               disabled={loading}
             >
-              {loading ? 'Отправка...' : 'Получить код'}
+              {loading ? t('forgotPassword.sending') : t('forgotPassword.sendCode')}
             </button>
           </form>
         ) : (
           <form onSubmit={handleResetPassword}>
             <div className="alert alert-info" style={{ marginBottom: '20px' }}>
-              📧 Проверьте свою почту! Мы отправили 6-значный код на <strong>{email}</strong>
+              📧 {t('forgotPassword.checkEmailHint')} <strong>{email}</strong>
               <br />
-              <small>Не забудьте проверить папку "Спам"</small>
+              <small>{t('forgotPassword.spamHint')}</small>
             </div>
-            
+
             <div className="form-group">
               <label>Email</label>
               <input
@@ -128,7 +120,7 @@ const ForgotPassword = () => {
             </div>
 
             <div className="form-group">
-              <label>Код восстановления (6 цифр)</label>
+              <label>{t('forgotPassword.resetCode')}</label>
               <input
                 type="text"
                 className="form-control"
@@ -139,9 +131,9 @@ const ForgotPassword = () => {
                 maxLength="6"
               />
             </div>
-            
+
             <div className="form-group">
-              <label>Новый пароль</label>
+              <label>{t('forgotPassword.newPassword')}</label>
               <input
                 type="password"
                 className="form-control"
@@ -151,9 +143,9 @@ const ForgotPassword = () => {
                 placeholder="••••••••"
               />
             </div>
-            
+
             <div className="form-group">
-              <label>Подтвердите пароль</label>
+              <label>{t('forgotPassword.confirmPassword')}</label>
               <input
                 type="password"
                 className="form-control"
@@ -163,28 +155,28 @@ const ForgotPassword = () => {
                 placeholder="••••••••"
               />
             </div>
-            
-            <button 
-              type="submit" 
+
+            <button
+              type="submit"
               className="btn btn-primary btn-block"
               disabled={loading}
             >
-              {loading ? 'Сохранение...' : 'Изменить пароль'}
+              {loading ? t('forgotPassword.saving') : t('forgotPassword.changePassword')}
             </button>
-            
-            <button 
-              type="button" 
+
+            <button
+              type="button"
               className="btn btn-secondary btn-block"
               onClick={() => setStep(1)}
               style={{ marginTop: '10px' }}
             >
-              Назад
+              {t('forgotPassword.back')}
             </button>
           </form>
         )}
-        
+
         <p className="auth-footer">
-          Вспомнили пароль? <Link to="/login">Войти</Link>
+          {t('forgotPassword.rememberPassword')} <Link to="/login">{t('forgotPassword.signIn')}</Link>
         </p>
       </div>
     </div>

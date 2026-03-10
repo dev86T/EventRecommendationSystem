@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import './Auth.css';
 
 const Register = () => {
@@ -11,6 +12,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -18,35 +20,35 @@ const Register = () => {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Пароли не совпадают');
+      setError(t('register.passwordsMismatch'));
       return;
     }
 
     if (password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов');
+      setError(t('register.passwordTooShort'));
       return;
     }
 
     setLoading(true);
     const result = await register(email, username, password);
-    
+
     if (result.success) {
       navigate('/dashboard');
     } else {
       setError(result.error);
     }
-    
+
     setLoading(false);
   };
 
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-title">Регистрация</h1>
-        <p className="auth-subtitle">Создайте аккаунт для начала работы</p>
-        
+        <h1 className="auth-title">{t('register.title')}</h1>
+        <p className="auth-subtitle">{t('register.subtitle')}</p>
+
         {error && <div className="alert alert-danger">{error}</div>}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
@@ -59,9 +61,9 @@ const Register = () => {
               placeholder="your@email.com"
             />
           </div>
-          
+
           <div className="form-group">
-            <label>Имя пользователя</label>
+            <label>{t('register.username')}</label>
             <input
               type="text"
               className="form-control"
@@ -71,9 +73,9 @@ const Register = () => {
               placeholder="username"
             />
           </div>
-          
+
           <div className="form-group">
-            <label>Пароль</label>
+            <label>{t('register.password')}</label>
             <input
               type="password"
               className="form-control"
@@ -83,9 +85,9 @@ const Register = () => {
               placeholder="••••••••"
             />
           </div>
-          
+
           <div className="form-group">
-            <label>Подтвердите пароль</label>
+            <label>{t('register.confirmPassword')}</label>
             <input
               type="password"
               className="form-control"
@@ -95,18 +97,18 @@ const Register = () => {
               placeholder="••••••••"
             />
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="btn btn-primary btn-block"
             disabled={loading}
           >
-            {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+            {loading ? t('register.registering') : t('register.createAccount')}
           </button>
         </form>
-        
+
         <p className="auth-footer">
-          Уже есть аккаунт? <Link to="/login">Войти</Link>
+          {t('register.alreadyHaveAccount')} <Link to="/login">{t('register.signIn')}</Link>
         </p>
       </div>
     </div>
