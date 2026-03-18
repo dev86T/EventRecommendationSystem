@@ -55,6 +55,9 @@ const ru = {
     forgotPassword: 'Забыли пароль?',
     noAccount: 'Нет аккаунта?',
     register: 'Зарегистрироваться',
+    invalidCredentials: 'Неверный email или пароль',
+    loginError: 'Ошибка входа. Попробуйте ещё раз.',
+    registerError: 'Ошибка регистрации. Попробуйте ещё раз.',
   },
 
   register: {
@@ -201,6 +204,7 @@ const ru = {
       calculate: 'Рассчитать результаты',
       calculating: 'Расчет...',
       needVotes: 'Необходимо минимум 1 голос для расчета результатов',
+      votingStillActive: 'Голосование ещё идёт. Результаты будут доступны после его завершения.',
     },
     info: {
       alternatives: 'Варианты для выбора',

@@ -37,8 +37,8 @@ const Profile = () => {
   // Load fresh profile data on mount
   useEffect(() => {
     profileAPI.getMe().then(res => {
-      setAvatarEmoji(res.data.avatarEmoji || '🐱');
-      setUsername(res.data.username || '');
+      if (res.data.avatarEmoji) setAvatarEmoji(res.data.avatarEmoji);
+      if (res.data.username) setUsername(res.data.username);
     }).catch((err) => {
       if (err.response?.status !== 401) console.warn('getMe failed', err);
     });

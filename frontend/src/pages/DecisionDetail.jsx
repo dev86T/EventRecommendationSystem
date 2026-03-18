@@ -516,15 +516,33 @@ const DecisionDetail = () => {
           {activeTab === 'results' && (
             <div className="results-tab">
               <div className="results-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => calculateResults('all')}
-                  disabled={calculatingResults || (decision.votes?.length || 0) === 0}
-                >
-                  {calculatingResults ? t('decisionDetail.results.calculating') : t('decisionDetail.results.calculate')}
-                </button>
-                {(decision.votes?.length || 0) === 0 && (
-                  <p className="help-text">{t('decisionDetail.results.needVotes')}</p>
+                {decision.status === 'Active' ? (
+                  <div style={{
+                    background: 'rgba(255,193,7,0.12)',
+                    border: '1px solid rgba(255,193,7,0.4)',
+                    borderRadius: '10px',
+                    padding: '14px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    color: '#b7791f',
+                  }}>
+                    <span style={{ fontSize: '20px' }}>⏳</span>
+                    <span>{t('decisionDetail.results.votingStillActive')}</span>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => calculateResults('all')}
+                      disabled={calculatingResults || (decision.votes?.length || 0) === 0}
+                    >
+                      {calculatingResults ? t('decisionDetail.results.calculating') : t('decisionDetail.results.calculate')}
+                    </button>
+                    {(decision.votes?.length || 0) === 0 && (
+                      <p className="help-text">{t('decisionDetail.results.needVotes')}</p>
+                    )}
+                  </>
                 )}
               </div>
               {results && <ResultsDisplay results={results} alternatives={decision.alternatives} />}
