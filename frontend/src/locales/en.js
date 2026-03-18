@@ -55,6 +55,9 @@ const en = {
     forgotPassword: 'Forgot password?',
     noAccount: "Don't have an account?",
     register: 'Register',
+    invalidCredentials: 'Invalid email or password',
+    loginError: 'Login error. Please try again.',
+    registerError: 'Registration error. Please try again.',
   },
 
   register: {
@@ -201,6 +204,7 @@ const en = {
       calculate: 'Calculate Results',
       calculating: 'Calculating...',
       needVotes: 'At least 1 vote is needed to calculate results',
+      votingStillActive: 'Voting is still in progress. Results will be available after voting ends.',
     },
     info: {
       alternatives: 'Options to choose from',

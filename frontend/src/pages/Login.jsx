@@ -23,7 +23,10 @@ const Login = () => {
     if (result.success) {
       navigate('/dashboard');
     } else {
-      setError(result.error);
+      // Use frontend translation — backend messages may not match the selected language
+      setError(result.status === 401 || result.status === 400
+        ? t('login.invalidCredentials')
+        : t('login.loginError'));
     }
 
     setLoading(false);

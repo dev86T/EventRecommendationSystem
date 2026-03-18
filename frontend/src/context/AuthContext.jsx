@@ -29,16 +29,16 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.login({ email, password });
       const { token, user } = response.data;
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
-      
+
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Ошибка входа' 
+      return {
+        success: false,
+        status: error.response?.status,
       };
     }
   };
@@ -47,16 +47,17 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.register({ email, username, password });
       const { token, user } = response.data;
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
-      
+
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Ошибка регистрации' 
+      return {
+        success: false,
+        status: error.response?.status,
+        serverMessage: error.response?.data?.message,
       };
     }
   };

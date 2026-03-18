@@ -317,8 +317,8 @@ const GroupDetail = () => {
                 }}>
                   <span style={{ fontSize: '24px' }}>✅</span>
                   <div>
-                    <div style={{ fontWeight: 600 }}>{foundUser.username}</div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>{t('common.code')}: {foundUser.userCode}</div>
+                    <div style={{ fontWeight: 600, color: '#1a202c' }}>{foundUser.username}</div>
+                    <div style={{ fontSize: '12px', color: '#4a5568' }}>{t('common.code')}: {foundUser.userCode}</div>
                   </div>
                 </div>
               )}

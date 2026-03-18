@@ -55,6 +55,9 @@ const de = {
     forgotPassword: 'Passwort vergessen?',
     noAccount: 'Kein Konto?',
     register: 'Registrieren',
+    invalidCredentials: 'Ungültige E-Mail oder Passwort',
+    loginError: 'Anmeldefehler. Bitte versuchen Sie es erneut.',
+    registerError: 'Registrierungsfehler. Bitte versuchen Sie es erneut.',
   },
 
   register: {
@@ -201,6 +204,7 @@ const de = {
       calculate: 'Ergebnisse berechnen',
       calculating: 'Berechnen...',
       needVotes: 'Mindestens 1 Stimme ist für die Berechnung der Ergebnisse erforderlich',
+      votingStillActive: 'Die Abstimmung läuft noch. Ergebnisse sind nach Abschluss der Abstimmung verfügbar.',
     },
     info: {
       alternatives: 'Optionen zur Auswahl',

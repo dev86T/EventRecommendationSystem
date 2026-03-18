@@ -35,7 +35,7 @@ const Register = () => {
     if (result.success) {
       navigate('/dashboard');
     } else {
-      setError(result.error);
+      setError(result.serverMessage || t('login.registerError'));
     }
 
     setLoading(false);
