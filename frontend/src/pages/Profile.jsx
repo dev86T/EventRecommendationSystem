@@ -41,7 +41,8 @@ const Profile = () => {
       setUsername(res.data.username || '');
     }).catch((err) => {
       if (err.response?.status !== 401) console.warn('getMe failed', err);
-})});
+    })
+  });
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
