@@ -123,7 +123,10 @@ const GroupDetail = () => {
 
   const handleAddMember = async (e) => {
     e.preventDefault();
-    if (!foundUser) return;
+    if (!foundUser) {
+      await handleSearchUser();
+      return;
+    }
     try {
       await groupsAPI.addMember(id, userCodeInput.trim().toUpperCase());
       setShowAddMemberModal(false);
