@@ -34,7 +34,15 @@ const Profile = () => {
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailMsg, setEmailMsg] = useState(null);
 
-  // Load fresh profile data on mount
+  // Sync form state when user context becomes available (e.g. after page refresh,
+  // AuthContext loads user from localStorage asynchronously so useState initial
+  // value may have been evaluated before user was ready)
+  useEffect(() => {
+    if (user?.avatarEmoji) setAvatarEmoji(user.avatarEmoji);
+    if (user?.username) setUsername(user.username);
+  }, [user?.id]);
+
+  // Load fresh profile data from server (overrides context if server has newer value)
   useEffect(() => {
     profileAPI.getMe().then(res => {
       if (res.data.avatarEmoji) setAvatarEmoji(res.data.avatarEmoji);
