@@ -36,6 +36,7 @@ const GroupDetail = () => {
   const [searching, setSearching] = useState(false);
   const [deletingDecision, setDeletingDecision] = useState(null);
   const [removingMember, setRemovingMember] = useState(null);
+  const [togglingAdmin, setTogglingAdmin] = useState(null);
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
   const [editGroupName, setEditGroupName] = useState('');
   const [editGroupDescription, setEditGroupDescription] = useState('');
@@ -137,6 +138,22 @@ const GroupDetail = () => {
     } catch (error) {
       const msg = error.response?.data?.message || t('groupDetail.errorAddingMember');
       setSearchError(msg);
+    }
+  };
+
+  const handleToggleAdmin = async (memberId, memberUsername, currentIsAdmin) => {
+    const confirmKey = currentIsAdmin
+      ? t('groupDetail.confirmRemoveAdmin', { username: memberUsername })
+      : t('groupDetail.confirmMakeAdmin', { username: memberUsername });
+    if (!window.confirm(confirmKey)) return;
+    try {
+      setTogglingAdmin(memberId);
+      await groupsAPI.toggleAdmin(id, memberId);
+      loadData();
+    } catch (error) {
+      alert(error.response?.data?.message || t('groupDetail.errorTogglingAdmin'));
+    } finally {
+      setTogglingAdmin(null);
     }
   };
 
@@ -401,20 +418,32 @@ const GroupDetail = () => {
             {group.members.map(member => {
               const isThisCreator = String(member.userId) === String(group.creatorId);
               const canRemove = canDelete && !isThisCreator;
+              const displayName = member.user.username || member.user.email;
               return (
                 <div key={member.userId} className="member-item">
                   <div className="member-avatar" style={{ fontSize: '32px' }}>
                     {member.user.avatarEmoji || getAnimalAvatar(member.user.email)}
                   </div>
                   <div className="member-info">
-                    <div className="member-name">{member.user.username}</div>
+                    <div className="member-name">{displayName}</div>
                   </div>
                   {isThisCreator && <span className="badge badge-warning">{t('common.creator')}</span>}
                   {!isThisCreator && member.isAdmin && <span className="badge badge-primary">{t('common.admin')}</span>}
+                  {isCreator && !isThisCreator && (
+                    <button
+                      className={`btn-icon-subtle${member.isAdmin ? ' btn-icon-danger' : ''}`}
+                      onClick={() => handleToggleAdmin(member.userId, displayName, member.isAdmin)}
+                      disabled={togglingAdmin === member.userId}
+                      title={member.isAdmin ? t('groupDetail.removeAdmin') : t('groupDetail.makeAdmin')}
+                      style={{ marginLeft: canRemove ? '0' : 'auto' }}
+                    >
+                      {togglingAdmin === member.userId ? '⏳' : member.isAdmin ? '👑✕' : '👑'}
+                    </button>
+                  )}
                   {canRemove && (
                     <button
                       className="btn btn-danger btn-sm"
-                      onClick={() => handleRemoveMember(member.userId, member.user.username)}
+                      onClick={() => handleRemoveMember(member.userId, displayName)}
                       disabled={removingMember === member.userId}
                       title={t('common.delete')}
                       style={{ marginLeft: 'auto' }}

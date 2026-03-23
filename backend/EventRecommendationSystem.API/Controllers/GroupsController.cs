@@ -222,6 +222,33 @@ public class GroupsController : ControllerBase
         return Ok(new { message = "Группа удалена" });
     }
 
+    [HttpPut("{groupId}/members/{userId}/admin")]
+    public async Task<IActionResult> ToggleAdmin(Guid groupId, Guid userId)
+    {
+        var currentUserId = GetUserId();
+        var group = await _groupRepository.GetByIdAsync(groupId);
+
+        if (group == null)
+            return NotFound(new { message = "Группа не найдена" });
+
+        // Только создатель может назначать/снимать администраторов
+        if (group.CreatorId != currentUserId)
+            return Forbid();
+
+        // Нельзя изменить статус самого создателя
+        if (group.CreatorId == userId)
+            return BadRequest(new { message = "Нельзя изменить статус создателя группы" });
+
+        var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+        if (member == null)
+            return NotFound(new { message = "Участник не найден" });
+
+        member.IsAdmin = !member.IsAdmin;
+        await _groupRepository.UpdateMemberAsync(member);
+
+        return Ok(new { isAdmin = member.IsAdmin });
+    }
+
     [HttpDelete("{groupId}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(Guid groupId, Guid userId)
     {
