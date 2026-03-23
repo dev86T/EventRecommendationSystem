@@ -56,6 +56,7 @@ export const groupsAPI = {
   create: (data) => api.post('/groups', data),
   addMember: (groupId, userCode) => api.post(`/groups/${groupId}/members`, { userCode }),
   removeMember: (groupId, userId) => api.delete(`/groups/${groupId}/members/${userId}`),
+  toggleAdmin: (groupId, userId) => api.put(`/groups/${groupId}/members/${userId}/admin`),
   update: (groupId, data) => api.put(`/groups/${groupId}`, data),
   deleteGroup: (id) => api.delete(`/groups/${id}`),
 };

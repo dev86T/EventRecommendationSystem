@@ -89,4 +89,10 @@ public class GroupRepository : IGroupRepository
         return await _context.GroupMembers
             .AnyAsync(gm => gm.GroupId == groupId && gm.UserId == userId);
     }
+
+    public async Task UpdateMemberAsync(GroupMember member)
+    {
+        _context.GroupMembers.Update(member);
+        await _context.SaveChangesAsync();
+    }
 }
