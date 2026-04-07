@@ -49,7 +49,32 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Пользователь с таким именем уже существует" });
             }
 
-            // Генерируем код подтверждения и сохраняем pending-регистрацию
+            var requireVerification = _configuration.GetValue<bool>("Features:RequireEmailVerificationOnRegister");
+
+            if (!requireVerification)
+            {
+                // Dev-режим: создаём пользователя сразу без подтверждения email
+                Console.WriteLine($"[REGISTER] Email-верификация отключена, создаём пользователя напрямую");
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = request.Email,
+                    Username = request.Username,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    UserCode = await GenerateUniqueUserCodeAsync(),
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _userRepository.CreateAsync(user);
+                Console.WriteLine($"[REGISTER] Пользователь создан: {user.Username}, код: {user.UserCode}");
+                var token = GenerateJwtToken(user);
+                return Ok(new
+                {
+                    token,
+                    user = new { user.Id, user.Email, user.Username, user.UserCode }
+                });
+            }
+
+            // Prod-режим: отправляем код подтверждения на email
             var verificationCode = new Random().Next(100000, 999999).ToString();
             var expiry = DateTime.UtcNow.AddMinutes(15);
             _pendingRegistrations[request.Email] = (request, verificationCode, expiry);
