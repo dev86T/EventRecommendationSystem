@@ -63,6 +63,7 @@ const ru = {
   register: {
     title: 'Регистрация',
     subtitle: 'Создайте аккаунт для начала работы',
+    verifySubtitle: 'Проверьте почту — мы отправили код подтверждения',
     username: 'Имя пользователя',
     password: 'Пароль',
     confirmPassword: 'Подтвердите пароль',
@@ -72,6 +73,13 @@ const ru = {
     signIn: 'Войти',
     passwordsMismatch: 'Пароли не совпадают',
     passwordTooShort: 'Пароль должен содержать минимум 6 символов',
+    verificationCode: 'Код подтверждения',
+    verifying: 'Проверяем...',
+    confirmRegistration: 'Подтвердить регистрацию',
+    back: 'Назад',
+    checkEmailHint: 'Мы отправили 6-значный код на',
+    spamHint: 'Если письмо не пришло, проверьте папку «Спам»',
+    verifyError: 'Неверный или просроченный код подтверждения',
   },
 
   forgotPassword: {

@@ -63,6 +63,7 @@ const de = {
   register: {
     title: 'Registrieren',
     subtitle: 'Erstellen Sie ein Konto, um loszulegen',
+    verifySubtitle: 'Prüfen Sie Ihre E-Mail für den Bestätigungscode',
     username: 'Benutzername',
     password: 'Passwort',
     confirmPassword: 'Passwort bestätigen',
@@ -72,6 +73,13 @@ const de = {
     signIn: 'Anmelden',
     passwordsMismatch: 'Passwörter stimmen nicht überein',
     passwordTooShort: 'Passwort muss mindestens 6 Zeichen lang sein',
+    verificationCode: 'Bestätigungscode',
+    verifying: 'Überprüfen...',
+    confirmRegistration: 'Registrierung bestätigen',
+    back: 'Zurück',
+    checkEmailHint: 'Ein 6-stelliger Code wurde gesendet an',
+    spamHint: 'Prüfen Sie Ihren Spam-Ordner, falls die E-Mail fehlt',
+    verifyError: 'Ungültiger oder abgelaufener Bestätigungscode',
   },
 
   forgotPassword: {

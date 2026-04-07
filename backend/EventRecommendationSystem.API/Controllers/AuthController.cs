@@ -16,6 +16,9 @@ public class AuthController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
 
+    // Хранит данные о незавершённых регистрациях до подтверждения email
+    private static readonly Dictionary<string, (RegisterRequest Data, string Code, DateTime Expiry)> _pendingRegistrations = new();
+
     public AuthController(IUserRepository userRepository, IConfiguration configuration, IEmailService emailService)
     {
         _userRepository = userRepository;
@@ -46,20 +49,70 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Пользователь с таким именем уже существует" });
             }
 
-            // Создание пользователя
+            // Генерируем код подтверждения и сохраняем pending-регистрацию
+            var verificationCode = new Random().Next(100000, 999999).ToString();
+            var expiry = DateTime.UtcNow.AddMinutes(15);
+            _pendingRegistrations[request.Email] = (request, verificationCode, expiry);
+
+            Console.WriteLine($"[REGISTER] Код подтверждения для {request.Email}: {verificationCode}");
+
+            var emailSent = await _emailService.SendRegistrationVerificationAsync(request.Email, verificationCode, request.Username);
+            if (!emailSent)
+            {
+                Console.WriteLine($"[REGISTER] Не удалось отправить письмо на {request.Email}");
+                return StatusCode(500, new { message = "Не удалось отправить письмо с кодом подтверждения" });
+            }
+
+            Console.WriteLine($"[REGISTER] Письмо с кодом отправлено на {request.Email}");
+            return Ok(new { pending = true, message = "Код подтверждения отправлен на ваш email" });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[REGISTER ERROR] {ex.Message}");
+            return StatusCode(500, new { message = "Ошибка регистрации" });
+        }
+    }
+
+    // ========================= VERIFY EMAIL (REGISTRATION) =========================
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+    {
+        try
+        {
+            Console.WriteLine($"[VERIFY EMAIL] Подтверждение email: {request.Email}");
+
+            if (!_pendingRegistrations.TryGetValue(request.Email, out var pending))
+            {
+                return BadRequest(new { message = "Регистрация не найдена или истёк срок действия. Начните регистрацию заново." });
+            }
+
+            if (DateTime.UtcNow > pending.Expiry)
+            {
+                _pendingRegistrations.Remove(request.Email);
+                return BadRequest(new { message = "Срок действия кода истёк. Начните регистрацию заново." });
+            }
+
+            if (pending.Code != request.Code)
+            {
+                Console.WriteLine($"[VERIFY EMAIL] Неверный код для {request.Email}");
+                return BadRequest(new { message = "Неверный код подтверждения" });
+            }
+
+            _pendingRegistrations.Remove(request.Email);
+
+            // Создаём пользователя только после успешного подтверждения
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Email = request.Email,
-                Username = request.Username,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Email = pending.Data.Email,
+                Username = pending.Data.Username,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(pending.Data.Password),
                 UserCode = await GenerateUniqueUserCodeAsync(),
                 CreatedAt = DateTime.UtcNow
             };
 
             await _userRepository.CreateAsync(user);
-
-            Console.WriteLine($"[REGISTER] Пользователь создан: {user.Username}, код: {user.UserCode}");
+            Console.WriteLine($"[VERIFY EMAIL] Пользователь создан: {user.Username}, код: {user.UserCode}");
 
             var token = GenerateJwtToken(user);
 
@@ -77,8 +130,8 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[REGISTER ERROR] {ex.Message}");
-            return StatusCode(500, new { message = "Ошибка регистрации" });
+            Console.WriteLine($"[VERIFY EMAIL ERROR] {ex.Message}");
+            return StatusCode(500, new { message = "Ошибка подтверждения email" });
         }
     }
 
@@ -295,4 +348,10 @@ public class ResetPasswordRequest
     public string Email { get; set; } = string.Empty;
     public string ResetCode { get; set; } = string.Empty;
     public string NewPassword { get; set; } = string.Empty;
+}
+
+public class VerifyEmailRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
 }
