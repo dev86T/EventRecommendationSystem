@@ -45,12 +45,12 @@ const Register = () => {
     setLoading(false);
   };
 
-  const handleVerify = async (e) => {
-    e.preventDefault();
+  const handleVerify = async (e, codeOverride) => {
+    if (e) e.preventDefault();
     setError('');
     setLoading(true);
 
-    const result = await verifyRegistration(email, verificationCode);
+    const result = await verifyRegistration(email, codeOverride ?? verificationCode);
 
     if (result.success) {
       navigate('/dashboard');
@@ -64,6 +64,13 @@ const Register = () => {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        {loading && step === 1 && (
+          <div className="auth-loading-overlay">
+            <div className="auth-spinner" />
+            <span className="auth-loading-text">{t('register.sendingCode')}</span>
+          </div>
+        )}
+
         <h1 className="auth-title">{t('register.title')}</h1>
         <p className="auth-subtitle">
           {step === 1 ? t('register.subtitle') : t('register.verifySubtitle')}
@@ -143,7 +150,13 @@ const Register = () => {
                 type="text"
                 className="form-control"
                 value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setVerificationCode(val);
+                  if (val.length === 6) {
+                    handleVerify(null, val);
+                  }
+                }}
                 required
                 placeholder="123456"
                 maxLength="6"

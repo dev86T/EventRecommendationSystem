@@ -80,6 +80,7 @@ const de = {
     checkEmailHint: 'Ein 6-stelliger Code wurde gesendet an',
     spamHint: 'Prüfen Sie Ihren Spam-Ordner, falls die E-Mail fehlt',
     verifyError: 'Ungültiger oder abgelaufener Bestätigungscode',
+    sendingCode: 'Bestätigungs-E-Mail wird gesendet...',
   },
 
   forgotPassword: {
