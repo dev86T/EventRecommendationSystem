@@ -80,6 +80,7 @@ const en = {
     checkEmailHint: 'A 6-digit code was sent to',
     spamHint: "Check your spam folder if you don't see the email",
     verifyError: 'Invalid or expired verification code',
+    sendingCode: 'Sending confirmation email...',
   },
 
   forgotPassword: {
