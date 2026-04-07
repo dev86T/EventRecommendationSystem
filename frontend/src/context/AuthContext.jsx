@@ -46,6 +46,28 @@ export const AuthProvider = ({ children }) => {
   const register = async (email, username, password) => {
     try {
       const response = await authAPI.register({ email, username, password });
+      // Сервер вернул pending=true — нужно подтвердить email
+      if (response.data.pending) {
+        return { success: true, pending: true };
+      }
+      // На случай если в будущем убрать верификацию
+      const { token, user } = response.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        status: error.response?.status,
+        serverMessage: error.response?.data?.message,
+      };
+    }
+  };
+
+  const verifyRegistration = async (email, code) => {
+    try {
+      const response = await authAPI.verifyEmail({ email, code });
       const { token, user } = response.data;
 
       localStorage.setItem('token', token);
@@ -75,7 +97,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateUser, loading }}>
+    <AuthContext.Provider value={{ user, login, register, verifyRegistration, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

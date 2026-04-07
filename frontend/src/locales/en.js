@@ -63,6 +63,7 @@ const en = {
   register: {
     title: 'Register',
     subtitle: 'Create an account to get started',
+    verifySubtitle: 'Check your email for the confirmation code',
     username: 'Username',
     password: 'Password',
     confirmPassword: 'Confirm Password',
@@ -72,6 +73,13 @@ const en = {
     signIn: 'Sign In',
     passwordsMismatch: 'Passwords do not match',
     passwordTooShort: 'Password must be at least 6 characters',
+    verificationCode: 'Verification Code',
+    verifying: 'Verifying...',
+    confirmRegistration: 'Confirm Registration',
+    back: 'Back',
+    checkEmailHint: 'A 6-digit code was sent to',
+    spamHint: "Check your spam folder if you don't see the email",
+    verifyError: 'Invalid or expired verification code',
   },
 
   forgotPassword: {
