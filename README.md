@@ -113,5 +113,3 @@ EventRecommendationSystem/
 ```
 
 ---
-
-*Дипломный проект, 2026*
