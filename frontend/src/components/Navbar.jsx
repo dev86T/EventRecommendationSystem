@@ -10,6 +10,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showCodeTooltip, setShowCodeTooltip] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Close drawer on route change
@@ -30,7 +31,10 @@ const Navbar = () => {
 
   const handleCopyCode = () => {
     if (user?.userCode) {
-      navigator.clipboard.writeText(user.userCode);
+      navigator.clipboard.writeText(user.userCode).then(() => {
+        setCodeCopied(true);
+        setTimeout(() => setCodeCopied(false), 2000);
+      });
     }
   };
 
@@ -60,7 +64,7 @@ const Navbar = () => {
                   <span className="user-code-value">{user.userCode}</span>
                   {showCodeTooltip && (
                     <div className="user-code-tooltip">
-                      {t('navbar.codeDescription')}
+                      {codeCopied ? t('navbar.copied') : t('navbar.codeDescription')}
                     </div>
                   )}
                 </div>
@@ -109,10 +113,10 @@ const Navbar = () => {
           <div
             className="nav-drawer-code"
             onClick={handleCopyCode}
-            title={t('navbar.clickToCopy')}
+            title={codeCopied ? t('navbar.copied') : t('navbar.clickToCopy')}
           >
             <span className="user-code-label">{t('navbar.myCode')}</span>
-            <span className="user-code-value">{user.userCode}</span>
+            <span className="user-code-value">{codeCopied ? '✓' : user.userCode}</span>
           </div>
         )}
 

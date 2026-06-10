@@ -5,6 +5,7 @@ import './VotingInterface.css';
 const VotingInterface = ({ alternatives, userVote, onSubmit }) => {
   const [rankedAlternatives, setRankedAlternatives] = useState([]);
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -35,12 +36,18 @@ const VotingInterface = ({ alternatives, userVote, onSubmit }) => {
 
   const handleDragEnd = () => { setDraggedIndex(null); };
 
-  const handleSubmit = () => {
-    const rankings = rankedAlternatives.map((alt, index) => ({
-      alternativeId: alt.id,
-      rank: index + 1
-    }));
-    onSubmit(rankings);
+  const handleSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const rankings = rankedAlternatives.map((alt, index) => ({
+        alternativeId: alt.id,
+        rank: index + 1
+      }));
+      await onSubmit(rankings);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const moveUp = (index) => {
@@ -104,8 +111,10 @@ const VotingInterface = ({ alternatives, userVote, onSubmit }) => {
       </div>
 
       <div className="voting-actions">
-        <button className="btn btn-primary btn-large" onClick={handleSubmit}>
-          {userVote ? t('votingInterface.updateVote') : t('votingInterface.submitVote')}
+        <button className="btn btn-primary btn-large" onClick={handleSubmit} disabled={submitting}>
+          {submitting
+            ? t('common.saving')
+            : userVote ? t('votingInterface.updateVote') : t('votingInterface.submitVote')}
         </button>
       </div>
 

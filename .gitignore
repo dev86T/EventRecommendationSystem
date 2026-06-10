@@ -44,3 +44,10 @@ logs/
 # local configs
 appsettings.Developer.json
 **/appsettings.Developer.json
+
+# Claude Code
+.claude/
+
+# Stray build artifacts
+backend/net8.0/
+
