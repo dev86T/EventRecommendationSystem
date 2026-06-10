@@ -30,6 +30,7 @@ const DecisionDetail = () => {
   const [editSaving, setEditSaving] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [editData, setEditData] = useState({ title: '', description: '', isBlindVoting: false, isAnonymous: false, alternatives: [] });
+  const [editOriginal, setEditOriginal] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -161,8 +162,7 @@ const DecisionDetail = () => {
     try {
       setDeletingDecision(true);
       setError('');
-      const api = (await import('../services/api')).default;
-      await api.delete(`/decisions/${id}`);
+      await decisionsAPI.deleteDecision(id);
       setSuccess(t('decisionDetail.decisionDeleted'));
       setTimeout(() => navigate(`/groups/${decision.groupId}`), 1500);
     } catch (err) {
@@ -175,7 +175,7 @@ const DecisionDetail = () => {
   };
 
   const handleOpenEdit = () => {
-    setEditData({
+    const initial = {
       title: decision.title,
       description: decision.description,
       isBlindVoting: decision.isBlindVoting,
@@ -186,8 +186,17 @@ const DecisionDetail = () => {
         description: a.description || '',
         isNew: false
       }))
-    });
+    };
+    setEditData(initial);
+    setEditOriginal(JSON.stringify(initial));
     setShowEditModal(true);
+  };
+
+  const handleCloseEdit = () => {
+    const isDirty = editOriginal !== null && JSON.stringify(editData) !== editOriginal;
+    if (isDirty && !window.confirm(t('decisionDetail.edit.unsavedChanges'))) return;
+    setShowEditModal(false);
+    setEditOriginal(null);
   };
 
   const handleSaveEdit = async () => {
@@ -684,11 +693,11 @@ const DecisionDetail = () => {
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="modal" onClick={(e) => e.target.classList.contains('modal') && setShowEditModal(false)}>
+        <div className="modal" onClick={(e) => e.target.classList.contains('modal') && handleCloseEdit()}>
           <div className="modal-content">
             <div className="modal-header">
               <h2>{t('decisionDetail.edit.title')}</h2>
-              <button className="modal-close" onClick={() => setShowEditModal(false)}>✕</button>
+              <button className="modal-close" onClick={handleCloseEdit}>✕</button>
             </div>
 
             <div className="form-group">
@@ -785,7 +794,7 @@ const DecisionDetail = () => {
               <button className="btn btn-primary" onClick={handleSaveEdit} disabled={editSaving || !editData.title.trim()}>
                 {editSaving ? t('decisionDetail.edit.saving') : t('decisionDetail.edit.save')}
               </button>
-              <button className="btn btn-secondary" onClick={() => setShowEditModal(false)} disabled={editSaving}>
+              <button className="btn btn-secondary" onClick={handleCloseEdit} disabled={editSaving}>
                 {t('decisionDetail.edit.cancel')}
               </button>
             </div>

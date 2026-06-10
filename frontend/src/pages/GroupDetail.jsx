@@ -239,15 +239,6 @@ const GroupDetail = () => {
   // Can delete: creator OR admin
   const canDelete = isCreator || isAdmin;
 
-  console.log('[GROUP DETAIL] Permissions check:', {
-    creatorId: group.creatorId,
-    userId: user?.id,
-    isCreator,
-    isAdmin,
-    canDelete,
-    currentMember
-  });
-
   return (
     <div className="container group-detail">
       <div className="group-header">
@@ -502,10 +493,17 @@ const GroupDetail = () => {
                       )}
                       {group && group.members && (
                         <div className="vote-progress-wrapper">
-                          <div className="vote-progress-label">
+                          <div className="vote-progress-label" aria-hidden="true">
                             {decision.votesCount}/{group.members.length} {t('groupDetail.voted')}
                           </div>
-                          <div className="vote-progress-bar">
+                          <div
+                            className="vote-progress-bar"
+                            role="progressbar"
+                            aria-valuenow={decision.votesCount}
+                            aria-valuemin={0}
+                            aria-valuemax={group.members.length}
+                            aria-label={`${decision.votesCount} ${t('groupDetail.voted')} ${group.members.length}`}
+                          >
                             <div
                               className="vote-progress-fill"
                               style={{
